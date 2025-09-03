@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.log
+
+# Virtual environments
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables
+.env
+.envrc
+
+# IDE settings
+.idea/
+.vscode/
+
+# Docker
+*.pid
+
+# Test/cache
+.coverage
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+
+# Jupyter
+.ipynb_checkpoints
+
+# Streamlit
+.streamlit/secrets.toml

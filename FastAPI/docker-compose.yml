@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres
+    container_name: calorie-tracker-db
+    restart: always
+    ports:
+      - "5433:5432"
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+  backend:
+    build: .
+    container_name: calorie-tracker-api
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+volumes:
+  postgres_data:
