@@ -38,6 +38,7 @@ class MealIngredient(Base):
     fridge_product_id = Column(Integer, ForeignKey("fridge_products.id"))
 
     meal = relationship("Meal", back_populates="ingredients")
+    fridge_product = relationship("FridgeProduct", back_populates="meal_ingredient")
 
 class Fridge(Base):
     __tablename__ = "fridges"
@@ -75,6 +76,8 @@ class FridgeProduct(Base):
     is_favourite = Column(Boolean, nullable=False, default=False)
 
     fridge = relationship("Fridge", back_populates="fridge_products")
+    fridge_meal_ingredient = relationship("FridgeMealIngredient", back_populates="fridge_product")
+    meal_ingredient = relationship("MealIngredient", back_populates="fridge_product")
 
 class FridgeMealIngredient(Base):
     __tablename__ = "fridge_meal_ingredients"
@@ -84,6 +87,7 @@ class FridgeMealIngredient(Base):
     fridge_product_id = Column(Integer, ForeignKey("fridge_products.id"))
 
     fridge_meal = relationship("FridgeMeal", back_populates="ingredients")
+    fridge_product = relationship("FridgeProduct", back_populates="fridge_meal_ingredient")
 
 class Weight(Base):
     __tablename__ = "weights"

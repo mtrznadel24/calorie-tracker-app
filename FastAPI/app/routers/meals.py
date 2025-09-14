@@ -1,3 +1,3 @@
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/fridge", tags=["fridge"])
+router = APIRouter(prefix="/meals", tags=["meals"])

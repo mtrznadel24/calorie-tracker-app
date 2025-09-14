@@ -1,42 +1,97 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.enums import NutrientType
 from app.schemas.fridge import *
+from app.schemas.meals import MealRead
 from app.services.fridge import *
 from typing import List
 
 from app.routers import meals
 
-router = APIRouter(prefix="/fridge", tags=["fridge"])
+router = APIRouter(prefix="/fridges", tags=["fridges"])
 
-@router.post("/products", response_model=FridgeProductRead)
-def add_fridge_product(product_in: FridgeProductCreate, db: Session = Depends(get_db)):
-    return create_fridge_product(db, product_in)
+#Fridge products
 
-@router.get("/products", response_model=List[FridgeProductRead])
-def read_fridge_products(db: Session = Depends(get_db)):
-    return get_fridge_products(db)
+@router.post("/{fridge_id}/products", response_model=FridgeProductRead)
+def add_fridge_product(fridge_id: int, product_in: FridgeProductCreate, db: Session = Depends(get_db)):
+    return create_fridge_product(db, fridge_id, product_in)
 
-@router.get("/products/{product_id}", response_model=FridgeProductRead)
-def read_fridge_product(product_id: int, db: Session = Depends(get_db)):
-    result = get_fridge_product(db, product_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Fridge product not found")
-    return result
+@router.get("/{fridge_id}/products", response_model=List[FridgeProductRead])
+def read_fridge_products(
+        fridge_id: int,
+        is_favourite: bool = False,
+        category: FoodCategory = None,
+        skip: int = 0, limit: int = 25,
+        db: Session = Depends(get_db)
+):
+    return get_fridge_products(db, fridge_id, is_favourite, category, skip, limit)
 
-@router.post("/meals", response_model=FridgeMealRead)
-def add_fridge_meal(meal_in: FridgeMealCreate, db: Session = Depends(get_db)):
-    return create_fridge_meal(db, meal_in)
+@router.get("/{fridge_id}/products/{product_id}", response_model=FridgeProductRead)
+def read_fridge_product(fridge_id: int, product_id: int, db: Session = Depends(get_db)):
+    return get_fridge_product(db, fridge_id, product_id)
 
-@router.delete("/meals/{meal_id}", response_model=FridgeMealRead)
-def delete_fridge_meal(meal_id: int, db: Session = Depends(get_db)):
-    return delete_fridge_meal(db, meal_id)
+@router.put("/{fridge_id}/products/{product_id}", response_model=FridgeProductRead)
+def update_fridge_product(fridge_id: int, product_id: int, product_in: FridgeProductUpdate, db: Session = Depends(get_db)):
+    return update_fridge_product(db, fridge_id, product_id, product_in)
 
-@router.post("/meals/products", response_model=FridgeProductRead)
-def add_product_to_fridge_meal(product_in: FridgeMealIngredientCreate, db: Session = Depends(get_db)):
-    return add_product_to_fridge_meal(db, product_in)
+@router.delete("/{fridge_id}/products/{product_id}", response_model=FridgeProductRead)
+def delete_fridge_product(fridge_id: int, product_id: int, db: Session = Depends(get_db)):
+    return delete_fridge_product(db, fridge_id, product_id)
 
-@router.delete("meals/products/{product_id}", response_model=FridgeProductRead)
-def delete_product_from_fridge_meal(product_id: int, db: Session = Depends(get_db)):
-    return delete_product_from_fridge_meal(db, product_id)
+#Fridge meals
+
+@router.post("/{fridge_id}/meals", response_model=FridgeMealRead)
+def add_fridge_meal(fridge_id: int, meal_in: FridgeMealCreate, db: Session = Depends(get_db)):
+    return create_fridge_meal(db, fridge_id, meal_in)
+
+@router.get("/{fridge_id}/meals", response_model=List[FridgeMealRead])
+def read_fridge_meals(
+        fridge_id: int,
+        is_favourite: bool = False,
+        skip: int = 0, limit: int = 25,
+        db: Session = Depends(get_db)
+):
+    return get_fridge_meals(db, fridge_id, is_favourite, skip, limit)
+
+@router.get("/{fridge_id}/meals/{meal_id}", response_model=FridgeMealRead)
+def read_fridge_meal(fridge_id: int, meal_id: int, db: Session = Depends(get_db)):
+    return get_fridge_meal(db, fridge_id, meal_id)
+
+@router.put("/{fridge_id}/meals/{meal_id}", response_model=FridgeMealRead)
+def update_fridge_meal(fridge_id: int, meal_id: int, meal_in: FridgeMealUpdate, db: Session = Depends(get_db)):
+    return update_fridge_meal(db, fridge_id, meal_id, meal_in)
+@router.delete("/{fridge_id}/meals/{meal_id}", response_model=FridgeMealRead)
+def delete_fridge_meal(fridge_id: int, meal_id: int, db: Session = Depends(get_db)):
+    return delete_fridge_meal(db, fridge_id, meal_id)
+
+@router.get("/{fridge_id}/meals/{meal_id}/nutrients/{nutrient_type}", response_model=float)
+def read_fridge_meal_nutrient_sum(fridge_id: int, meal_id: int, nutrient_type: NutrientType, db: Session = Depends(get_db)):
+    return get_fridge_meal_nutrient_sum(db, fridge_id, meal_id, nutrient_type)
+
+@router.get("/{fridge_id}/meals/{meal_id}/macros", response_model=Dict[str, float])
+def read_fridge_meal_macros(fridge_id: int, meal_id: int, db: Session = Depends(get_db)):
+    return get_fridge_meal_macro(db, fridge_id, meal_id)
+
+#Fridge meal ingredients
+
+@router.post("/{fridge_id}/meals/{meal_id}/ingredients", response_model=FridgeMealIngredientRead)
+def add_fridge_meal_ingredient(fridge_id: int, meal_id: int, ingredient_in: FridgeMealIngredientCreate, db: Session = Depends(get_db)):
+    return add_fridge_meal_ingredient(db, fridge_id, meal_id, ingredient_in)
+
+@router.get("/{fridge_id}/meals/{meal_id}/ingredients", response_model=List[FridgeMealIngredientRead])
+def read_fridge_meal_ingredients(fridge_id: int, meal_id: int, db: Session = Depends(get_db)):
+    return get_fridge_meal_ingredients(db, fridge_id, meal_id)
+
+@router.get("/{fridge_id}/meals/{meal_id}/ingredients/{ingredient_id}", response_model=FridgeMealIngredientRead)
+def read_fridge_meal_ingredient(fridge_id: int, meal_id: int, ingredient_id: int, db: Session = Depends(get_db)):
+    return get_fridge_meal_ingredient(db, fridge_id, meal_id, ingredient_id)
+
+@router.put("/{fridge_id}/meals/{meal_id}/ingredients/{ingredient_id}", response_model=FridgeMealIngredientRead)
+def update_fridge_meal_ingredient(fridge_id: int, meal_id: int, ingredient_id: int, ingredient_in: FridgeMealIngredientUpdate, db: Session = Depends(get_db)):
+    return update_fridge_meal_ingredient(db, fridge_id, meal_id, ingredient_id, ingredient_in)
+
+@router.delete("/{fridge_id}/meals/{meal_id}/ingredients/{ingredient_id}", response_model=FridgeMealIngredientRead)
+def delete_fridge_meal_ingredient(fridge_id: int, meal_id: int, ingredient_id: int, db: Session = Depends(get_db)):
+    return delete_fridge_meal_ingredient(db, fridge_id, meal_id, ingredient_id)
 
