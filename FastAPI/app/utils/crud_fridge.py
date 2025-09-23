@@ -11,7 +11,7 @@ def get_fridge_object_or_404(db: Session, model, fridge_id: int, object_id: int)
         model.fridge_id == fridge_id
     ).first()
     if not obj:
-        raise NotFoundError(f"{model.__name__} does not exist")
+        raise NotFoundError(f"{model.__name__} not found")
     return obj
 
 def create_fridge_instance(db: Session, model, fridge_id: int, data: dict):
@@ -22,10 +22,10 @@ def create_fridge_instance(db: Session, model, fridge_id: int, data: dict):
     db.refresh(obj)
     return obj
 
-def update_fridge_object(db: Session, model, fridge_id: int, object_id: int, data: BaseModel):
+def update_fridge_object(db: Session, model, fridge_id: int, object_id: int, data: dict):
     obj = get_fridge_object_or_404(db, model, fridge_id, object_id)
 
-    for field, value in data.model_dump(exclude_unset=True).items():
+    for field, value in data.items():
         setattr(obj, field, value)
 
     db.commit()
