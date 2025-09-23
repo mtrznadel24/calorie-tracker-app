@@ -52,7 +52,7 @@ def upgrade() -> None:
     op.create_table('fridge_meals',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('fridge_id', sa.Integer(), nullable=True),
-    sa.Column('name', sa.String(), nullable=True),
+    sa.Column('meal_name', sa.String(), nullable=True),
     sa.Column('is_favourite', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['fridge_id'], ['fridges.id'], ),
     sa.PrimaryKeyConstraint('id')
