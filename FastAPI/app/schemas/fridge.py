@@ -1,5 +1,7 @@
 from pydantic import BaseModel, ConfigDict
-from app.enums import FoodCategory
+
+from app.models.fridge import FoodCategory
+
 
 # Fridge product
 class FridgeProductCreate(BaseModel):
@@ -10,6 +12,7 @@ class FridgeProductCreate(BaseModel):
     carbs_100g: float
     category: FoodCategory
     is_favourite: bool = False
+
 
 class FridgeProductRead(BaseModel):
     id: int
@@ -23,6 +26,7 @@ class FridgeProductRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class FridgeProductUpdate(BaseModel):
     product_name: str | None = None
     calories_100g: float | None = None
@@ -32,10 +36,12 @@ class FridgeProductUpdate(BaseModel):
     category: FoodCategory | None = None
     is_favourite: bool | None = None
 
+
 # Fridge meal
 class FridgeMealCreate(BaseModel):
     name: str
     is_favourite: bool
+
 
 class FridgeMealRead(BaseModel):
     id: int
@@ -45,14 +51,17 @@ class FridgeMealRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class FridgeMealUpdate(BaseModel):
     name: str | None = None
     is_favourite: bool | None = None
+
 
 # Fridge meal ingredient
 class FridgeMealIngredientCreate(BaseModel):
     weight: float
     fridge_product_id: int
+
 
 class FridgeMealIngredientRead(BaseModel):
     id: int
@@ -61,6 +70,6 @@ class FridgeMealIngredientRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class FridgeMealIngredientUpdate(BaseModel):
     weight: float | None = None
-

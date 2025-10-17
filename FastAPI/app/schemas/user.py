@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserCreate(BaseModel):
@@ -8,12 +9,14 @@ class UserCreate(BaseModel):
     email: EmailStr
     height: Optional[float] = None
 
+
 class UserRead(BaseModel):
     id: int
     username: str
     email: str
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserUpdate(BaseModel):
     username: str | None = None

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from app.exception_handler import register_exception_handlers
-from app.routers import user, meals, fridge
+from app.core.exception_handler import register_exception_handlers
+from app.routers import fridge, meals, user
 
 app = FastAPI()
 register_exception_handlers(app)
