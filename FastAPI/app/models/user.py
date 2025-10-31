@@ -1,4 +1,5 @@
-from datetime import date
+from enum import Enum
+from datetime import date, datetime, timezone
 
 from sqlalchemy import (
     Column,
@@ -8,10 +9,17 @@ from sqlalchemy import (
     Integer,
     String,
     UniqueConstraint,
+    Boolean,
+    Enum as SqlEnum, DateTime
 )
 from sqlalchemy.orm import relationship
 
 from app.core.db import Base
+
+
+class Gender(str, Enum):
+    MALE = "male"
+    FEMALE = "female"
 
 
 class User(Base):
@@ -20,7 +28,15 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
     height = Column(Float)
+    age = Column(Integer)
+    gender = Column(SqlEnum(Gender, name="gender"))
+    activity_level = Column(Float)
 
     fridge = relationship(
         "Fridge", back_populates="user", uselist=False, cascade="all, delete-orphan"

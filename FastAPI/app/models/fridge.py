@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from app.core.db import Base
 
 
-class FoodCategory(Enum):
+class FoodCategory(str, Enum):
     FRUIT = "fruits"
     VEGETABLE = "vegetables"
     GRAINS = "grains"
