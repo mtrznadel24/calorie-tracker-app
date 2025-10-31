@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.meals import MealType
 
@@ -25,11 +25,11 @@ class MealRead(BaseModel):
 
 
 class MealIngredientProductCreate(BaseModel):
-    product_name: str
-    calories_100g: float
-    proteins_100g: float
-    fats_100g: float
-    carbs_100g: float
+    product_name: str = Field(pattern=r"^[a-zA-Z0-9\s\-.]+$")
+    calories_100g: float = Field(gt=0)
+    proteins_100g: float = Field(gt=0)
+    fats_100g: float = Field(gt=0)
+    carbs_100g: float = Field(gt=0)
 
 
 class MealIngredientProductRead(BaseModel):
@@ -44,18 +44,18 @@ class MealIngredientProductRead(BaseModel):
 
 
 class MealIngredientProductUpdate(BaseModel):
-    product_name: str | None = None
-    calories_100g: float | None = None
-    proteins_100g: float | None = None
-    fats_100g: float | None = None
-    carbs_100g: float | None = None
+    product_name: str | None = Field(pattern=r"^[a-zA-Z0-9\s\-.]+$")
+    calories_100g: float | None = Field(default=None, gt=0)
+    proteins_100g: float | None = Field(default=None, gt=0)
+    fats_100g: float | None = Field(default=None, gt=0)
+    carbs_100g: float | None = Field(default=None, gt=0)
 
 
 # Meal ingredient
 
 
 class MealIngredientCreate(BaseModel):
-    weight: float
+    weight: float = Field(gt=0)
     details: MealIngredientProductCreate
 
 

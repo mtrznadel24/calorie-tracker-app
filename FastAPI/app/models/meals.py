@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from app.core.db import Base
 
 
-class MealType(Enum):
+class MealType(str, Enum):
     BREAKFAST = "breakfast"
     LUNCH = "lunch"
     DINNER = "dinner"
