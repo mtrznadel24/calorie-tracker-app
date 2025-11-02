@@ -1,9 +1,7 @@
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 
-from app.core.db import get_db
 from app.core.enums import NutrientType
 from app.models.fridge import FoodCategory
 from app.schemas.fridge import (

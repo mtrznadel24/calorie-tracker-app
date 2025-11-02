@@ -1,14 +1,16 @@
-import os
+from pydantic import BaseSettings
 
-from dotenv import load_dotenv
+class Settings(BaseSettings):
+    DATABASE_URL: str
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+    REDIS_URL: str
+    DEBUG_LOGS: bool = False
+    PROJECT_NAME: str = "FastAPI App"
 
-load_dotenv()
+    class Config:
+        env_file = ".env"
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
-REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS"))
-
-REDIS_URL= os.getenv("REDIS_URL")
+settings = Settings()

@@ -1,36 +1,39 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import NotFoundError
 
 
-def get_or_404(db: Session, model, object_id: int):
-    obj = db.query(model).filter(model.id == object_id).first()
+async def get_or_404(db: AsyncSession, model, object_id: int):
+    result = await db.execute(select(model).where(model.id == object_id))
+    obj = result.scalars().first()
     if not obj:
         raise NotFoundError(f"{model.__name__} not found")
     return obj
 
 
-def create_instance(db: Session, model, data: dict):
+async def create_instance(db: AsyncSession, model, data: dict):
     obj = model(**data)
     db.add(obj)
-    db.commit()
-    db.refresh(obj)
+    await db.commit()
+    await db.refresh(obj)
     return obj
 
 
-def update_by_id(db: Session, model, object_id: int, data: dict):
-    obj = get_or_404(db, model, object_id)
+async def update_by_id(db: AsyncSession, model, object_id: int, data: dict):
+    obj = await get_or_404(db, model, object_id)
 
     for field, value in data.items():
         setattr(obj, field, value)
 
-    db.commit()
-    db.refresh(obj)
+    await db.commit()
+    await db.refresh(obj)
     return obj
 
 
-def delete_by_id(db: Session, model, object_id: int):
-    obj = get_or_404(db, model, object_id)
-    db.delete(obj)
-    db.commit()
+async def delete_by_id(db: AsyncSession, model, object_id: int):
+    obj = await get_or_404(db, model, object_id)
+    await db.delete(obj)
+    await db.commit()
     return obj
