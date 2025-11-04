@@ -1,19 +1,32 @@
+from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import NutrientType
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError
 from app.models.meals import Meal, MealIngredient, MealIngredientDetails, MealType
 from app.models.user import User
 from app.schemas.meals import MealCreate, MealIngredientCreate, MealIngredientUpdate
 from app.utils.crud import create_instance, delete_by_id, get_or_404, update_by_id
 
+fields = [
+    NutrientType.CALORIES,
+    NutrientType.PROTEINS,
+    NutrientType.FATS,
+    NutrientType.CARBS,
+]
+
 # Meal Utils
 
 
-def get_user_meal_or_404(db: Session, user_id: int, meal_id: int):
-    meal = db.query(Meal).filter(Meal.id == meal_id, Meal.user_id == user_id).first()
+async def get_user_meal_or_404(db: AsyncSession, user_id: int, meal_id: int) -> Meal:
+    result = await db.execute(
+        select(Meal).where(Meal.id == meal_id, Meal.user_id == user_id)
+    )
+    meal = result.scalars().first()
     if not meal:
         raise NotFoundError("Meal not found")
     return meal
@@ -22,141 +35,210 @@ def get_user_meal_or_404(db: Session, user_id: int, meal_id: int):
 # Meal
 
 
-def create_meal(db: Session, user_id: int, data: MealCreate):
-    get_or_404(db, User, user_id)
-    return create_instance(db, Meal, data.model_dump())
+async def create_meal(db: AsyncSession, user_id: int, data: MealCreate) -> Meal:
+    await get_or_404(db, User, user_id)
+    return await create_instance(db, Meal, data.model_dump())
 
 
-def get_meal(db: Session, user_id: int, meal_date: date, meal_type: MealType):
-    return (
-        db.query(Meal)
-        .filter(Meal.user_id == user_id)
-        .filter(Meal.date == meal_date)
-        .filter(Meal.type == meal_type)
-        .all()
+async def get_meal(
+    db: AsyncSession, user_id: int, meal_date: date, meal_type: MealType
+) -> Meal:
+    result = await db.execute(
+        select(Meal)
+        .where(Meal.user_id == user_id)
+        .where(Meal.date == meal_date)
+        .where(Meal.type == meal_type)
     )
+    return result.scalar_one_or_none()
 
 
-def get_meal_by_id(db: Session, user_id: int, meal_id: int):
-    get_or_404(db, User, user_id)
-    return get_or_404(db, Meal, meal_id)
+async def get_meal_by_id(db: AsyncSession, user_id: int, meal_id: int) -> Meal:
+    return await get_user_meal_or_404(db, user_id, meal_id)
 
 
-def delete_meal(db: Session, user_id: int, meal_id: int):
-    get_or_404(db, User, user_id)
-    return delete_by_id(db, Meal, meal_id)
+async def delete_meal(db: AsyncSession, user_id: int, meal_id: int) -> Meal:
+    await get_or_404(db, User, user_id)
+    return await delete_by_id(db, Meal, meal_id)
 
 
-def get_meal_nutrient_sum(
-    db: Session, user_id: int, meal_id: int, nutrient_type: NutrientType
-):
-    ingredients = get_meal_ingredients(db, user_id=user_id, meal_id=meal_id)
-    return sum(
-        (getattr(ing.details, nutrient_type.value, 0) * ing.weight) / 100
-        for ing in ingredients
-    )
-
-
-def get_meal_macro(db: Session, user_id: int, meal_id: int):
-    fields = [
-        NutrientType.CALORIES,
-        NutrientType.PROTEINS,
-        NutrientType.FATS,
-        NutrientType.CARBS,
-    ]
-    return {
-        field.value.replace("_100g", ""): get_meal_nutrient_sum(
-            db, user_id, meal_id, field
+async def get_meal_nutrient_sum(
+    db: AsyncSession, user_id: int, meal_id: int, nutrient_type: NutrientType
+) -> float:
+    stmt = (
+        select(
+            func.sum(
+                (
+                    getattr(MealIngredientDetails, nutrient_type.value + "_100g")
+                    * MealIngredient.weight
+                )
+                / 100
+            )
         )
-        for field in fields
-    }
-
-
-def get_meals_nutrient_sum_for_day(
-    db: Session, user_id: int, meal_date: date, nutrient_type: NutrientType
-):
-    meals = (
-        db.query(Meal)
-        .filter(Meal.user_id == user_id)
-        .filter(Meal.date == meal_date)
-        .all()
+        .select_from(MealIngredient)
+        .join(MealIngredientDetails)
+        .join(Meal)
+        .where(Meal.user_id == user_id, Meal.id == meal_id)
     )
-    return sum(
-        get_meal_nutrient_sum(db, user_id, meal.id, nutrient_type) for meal in meals
-    )
+    result = await db.execute(stmt)
+    return result.scalar() or 0.0
 
 
-def get_macro_for_day(db: Session, user_id: int, meal_date: date):
-    fields = [
-        NutrientType.CALORIES,
-        NutrientType.PROTEINS,
-        NutrientType.FATS,
-        NutrientType.CARBS,
-    ]
-    return {
-        field.value.replace("_100g", ""): get_meals_nutrient_sum_for_day(
-            db, user_id, meal_date, field
+async def get_meal_macro(
+    db: AsyncSession, user_id: int, meal_id: int
+) -> dict[str, float]:
+    stmt = (
+        select(
+            *[
+                func.sum(
+                    (
+                        getattr(MealIngredientDetails, field.value + "_100g")
+                        * MealIngredient.weight
+                    )
+                    / 100
+                ).alias(field.value)
+                for field in fields
+            ]
         )
-        for field in fields
-    }
+        .select_from(MealIngredient)
+        .join(MealIngredientDetails)
+        .join(Meal)
+        .where(Meal.user_id == user_id, Meal.id == meal_id)
+    )
+    result = await db.execute(stmt)
+    row = result.one_or_none()
+    return {field.value: getattr(row, field.value) or 0.0 for field in fields}
+
+
+async def get_meals_nutrient_sum_for_day(
+    db: AsyncSession, user_id: int, meal_date: date, nutrient_type: NutrientType
+) -> float:
+    stmt = (
+        select(
+            func.sum(
+                (
+                    getattr(MealIngredientDetails, nutrient_type.value + "_100g")
+                    * MealIngredient.weight
+                )
+                / 100
+            )
+        )
+        .select_from(MealIngredient)
+        .join(MealIngredientDetails)
+        .join(Meal)
+        .where(Meal.user_id == user_id, Meal.date == meal_date)
+    )
+    result = await db.execute(stmt)
+    return result.scalar() or 0.0
+
+
+async def get_macro_for_day(
+    db: AsyncSession, user_id: int, meal_date: date
+) -> dict[str, float]:
+    stmt = (
+        select(
+            *[
+                func.sum(
+                    (
+                        getattr(MealIngredientDetails, field.value + "_100g")
+                        * MealIngredient.weight
+                    )
+                    / 100
+                ).alias(field.value)
+                for field in fields
+            ]
+        )
+        .select_from(MealIngredient)
+        .join(MealIngredientDetails)
+        .join(Meal)
+        .where(Meal.user_id == user_id, Meal.date == meal_date)
+    )
+    result = await db.execute(stmt)
+    row = result.one_or_none()
+    return {field.value: getattr(row, field.value) or 0.0 for field in fields}
 
 
 # Meal ingredient
 
 
-def add_ingredient_to_meal(
-    db: Session, user_id: int, meal_id: int, data: MealIngredientCreate
-):
-    get_user_meal_or_404(db, user_id, meal_id)
+async def add_ingredient_to_meal(
+    db: AsyncSession, user_id: int, meal_id: int, data: MealIngredientCreate
+) -> MealIngredient:
+    await get_user_meal_or_404(db, user_id, meal_id)
     ingredient = MealIngredient(weight=data.weight, meal_id=meal_id)
     db.add(ingredient)
-    db.flush()
+    await db.flush()
 
     details = MealIngredientDetails(id=ingredient.id, **data.details.model_dump())
     db.add(details)
 
-    db.commit()
-    db.refresh(ingredient)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise ConflictError("Invalid ingredient data (constraint violation)")
+    except SQLAlchemyError:
+        await db.rollback()
+        raise
+
+    await db.refresh(ingredient)
     return ingredient
 
 
-def get_meal_ingredients(db: Session, user_id: int, meal_id: int):
-    get_user_meal_or_404(db, user_id, meal_id)
-    return db.query(MealIngredient).filter(MealIngredient.meal_id == meal_id).all()
-
-
-def get_meal_ingredient_by_id(db: Session, user_id: int, meal_id, ingredient_id: int):
-    get_user_meal_or_404(db, user_id, meal_id)
-    return (
-        db.query(MealIngredient)
-        .filter(MealIngredient.id == ingredient_id, MealIngredient.meal_id == meal_id)
-        .first()
+async def get_meal_ingredients(
+    db: AsyncSession, user_id: int, meal_id: int
+) -> Sequence[MealIngredient]:
+    await get_user_meal_or_404(db, user_id, meal_id)
+    result = await db.execute(
+        select(MealIngredient).where(MealIngredient.meal_id == meal_id)
     )
+    return result.scalars().all()
 
 
-def update_meal_ingredient(
-    db: Session, user_id: int, meal_id, ingredient_id: int, data: MealIngredientUpdate
-):
-    get_user_meal_or_404(db, user_id, meal_id)
-    ingredient = get_or_404(db, MealIngredient, ingredient_id)
+async def get_meal_ingredient_by_id(
+    db: AsyncSession, user_id: int, meal_id, ingredient_id: int
+) -> MealIngredient:
+    await get_user_meal_or_404(db, user_id, meal_id)
+    result = await db.execute(
+        select(MealIngredient).where(
+            MealIngredient.id == ingredient_id, MealIngredient.meal_id == meal_id
+        )
+    )
+    return result.scalar_one_or_none()
+
+
+async def update_meal_ingredient(
+    db: AsyncSession,
+    user_id: int,
+    meal_id,
+    ingredient_id: int,
+    data: MealIngredientUpdate,
+) -> MealIngredient:
+    await get_user_meal_or_404(db, user_id, meal_id)
+    ingredient = await get_or_404(db, MealIngredient, ingredient_id)
 
     if data.weight:
-        update_by_id(db, MealIngredient, ingredient_id, {"weight": data.weight})
+        await update_by_id(db, MealIngredient, ingredient_id, {"weight": data.weight})
 
     if data.details:
-        update_by_id(
+        if not ingredient.details:
+            raise NotFoundError("Ingredient details not found")
+        await update_by_id(
             db, MealIngredientDetails, ingredient.details.id, data.details.model_dump()
         )
 
     return ingredient
 
 
-def delete_meal_ingredient(db: Session, user_id: int, meal_id, ingredient_id: int):
-    get_user_meal_or_404(db, user_id, meal_id)
-    return delete_by_id(db, MealIngredient, ingredient_id)
+async def delete_meal_ingredient(
+    db: AsyncSession, user_id: int, meal_id, ingredient_id: int
+) -> MealIngredient:
+    await get_user_meal_or_404(db, user_id, meal_id)
+    return await delete_by_id(db, MealIngredient, ingredient_id)
 
 
-def get_ingredient_details(db: Session, user_id: int, meal_id, ingredient_id: int):
-    get_user_meal_or_404(db, user_id, meal_id)
-    ingredient = get_or_404(db, MealIngredient, ingredient_id)
+async def get_ingredient_details(
+    db: AsyncSession, user_id: int, meal_id, ingredient_id: int
+) -> MealIngredientDetails:
+    await get_user_meal_or_404(db, user_id, meal_id)
+    ingredient = await get_or_404(db, MealIngredient, ingredient_id)
     return ingredient.details

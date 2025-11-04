@@ -1,21 +1,23 @@
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError
 from app.core.security import get_hashed_password, verify_password
 from app.models.fridge import Fridge
 from app.models.user import User
-from app.schemas.user import UserCreate, UserRead, UserUpdate, UserUpdateEmail, UserUpdatePassword
+from app.schemas.user import UserCreate, UserUpdate, UserUpdateEmail, UserUpdatePassword
 from app.utils.crud import get_or_404, update_by_id
-
 
 # Users
 
 
-def create_user(db: Session, data: UserCreate):
-    if db.query(User).filter_by(email=data.email).first():
+async def create_user(db: AsyncSession, data: UserCreate) -> User:
+    result = await db.execute(select(User).where(User.email == data.email))
+    if result.scalar_one_or_none():
         raise ConflictError("Email already registered")
-    if db.query(User).filter_by(username=data.username).first():
+    result = await db.execute(select(User).where(User.username == data.username))
+    if result.scalars().first():
         raise ConflictError("Username already registered")
     user_instance = User(
         username=data.username,
@@ -23,35 +25,48 @@ def create_user(db: Session, data: UserCreate):
         email=data.email,
     )
     db.add(user_instance)
-    db.flush()
+    await db.flush()
 
     fridge_instance = Fridge(user_id=user_instance.id)
     db.add(fridge_instance)
-    db.commit()
-    db.refresh(user_instance)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise ConflictError("User already exists")
+    await db.refresh(user_instance)
     return user_instance
 
 
-def update_user(db: Session, user_id: int, data: UserUpdate):
-    return update_by_id(db, User, user_id, data.model_dump())
+async def update_user(db: AsyncSession, user_id: int, data: UserUpdate) -> User:
+    return await update_by_id(db, User, user_id, data.model_dump(exclude_unset=True))
 
-def change_user_email(db: Session, user_id: int, data: UserUpdateEmail):
-    user = get_or_404(db, User, user_id)
+
+async def change_user_email(
+    db: AsyncSession, user_id: int, data: UserUpdateEmail
+) -> User:
+    user = await get_or_404(db, User, user_id)
 
     try:
         user.email = data.new_email
-        db.commit()
+        await db.commit()
     except IntegrityError:
-        db.rollback()
+        await db.rollback()
         raise ConflictError("Email already registered")
-    db.refresh(user)
+    await db.refresh(user)
     return user
 
-def change_user_password(db: Session, user_id: int, data: UserUpdatePassword):
-    user = get_or_404(db, User, user_id)
+
+async def change_user_password(
+    db: AsyncSession, user_id: int, data: UserUpdatePassword
+) -> User:
+    user = await get_or_404(db, User, user_id)
     if not verify_password(data.old_password, user.hashed_password):
         raise ConflictError("Old password is incorrect")
     user.hashed_password = get_hashed_password(data.password)
-    db.commit()
-    db.refresh(user)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise ConflictError("Password update failed")
     return user
