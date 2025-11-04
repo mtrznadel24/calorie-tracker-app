@@ -2,17 +2,27 @@ import contextlib
 from typing import Annotated, AsyncIterator
 
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncConnection
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase
 
 from app.core.config import settings
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
+
 
 class DBSessionManager:
     def __init__(self, host: str):
         self._engine = create_async_engine(host)
-        self._sessionmaker = async_sessionmaker(autocommit=False, autoflush=False, bind=self._engine)
+        self._sessionmaker = async_sessionmaker(
+            autocommit=False, autoflush=False, bind=self._engine
+        )
 
     async def close(self):
         await self._engine.dispose()
@@ -24,7 +34,7 @@ class DBSessionManager:
         async with self._engine.begin() as conn:
             try:
                 yield conn
-            except RuntimeError:
+            except Exception:
                 await conn.rollback()
                 raise
 
@@ -33,7 +43,7 @@ class DBSessionManager:
         session = self._sessionmaker()
         try:
             yield session
-        except RuntimeError:
+        except Exception:
             await session.rollback()
             raise
         finally:
@@ -41,6 +51,7 @@ class DBSessionManager:
 
 
 session_manager = DBSessionManager(settings.DATABASE_URL)
+
 
 async def get_db():
     async with session_manager.session() as session:

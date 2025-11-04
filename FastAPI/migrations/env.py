@@ -11,7 +11,7 @@ from app.core.db import Base
 load_dotenv()
 
 config = context.config
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
+config.set_main_option("sqlalchemy.url", os.getenv("SYNC_DATABASE_URL"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

@@ -1,5 +1,6 @@
 from pydantic import BaseSettings
 
+
 class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
@@ -10,7 +11,7 @@ class Settings(BaseSettings):
     DEBUG_LOGS: bool = False
     PROJECT_NAME: str = "FastAPI App"
 
-    class Config:
-        env_file = ".env"
+    model_config = {"env_file": ".env", "extra": "ignore"}
+
 
 settings = Settings()

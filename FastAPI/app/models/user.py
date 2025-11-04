@@ -1,17 +1,9 @@
-from enum import Enum
 from datetime import date, datetime, timezone
+from enum import Enum
 
-from sqlalchemy import (
-    Column,
-    Date,
-    Float,
-    ForeignKey,
-    Integer,
-    String,
-    UniqueConstraint,
-    Boolean,
-    Enum as SqlEnum, DateTime
-)
+from sqlalchemy import Boolean, Column, Date, DateTime
+from sqlalchemy import Enum as SqlEnum
+from sqlalchemy import Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.core.db import Base
@@ -31,7 +23,11 @@ class User(Base):
 
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     height = Column(Float)
     age = Column(Integer)

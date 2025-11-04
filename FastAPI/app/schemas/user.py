@@ -1,7 +1,13 @@
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator, Field
-
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
 from zxcvbn import zxcvbn
 
 from app.models.user import Gender
@@ -26,12 +32,13 @@ def validate_passwords_match(password: str, confirm_password: str) -> str:
         raise ValueError("Passwords do not match.")
     return password
 
+
 class UserCreate(BaseModel):
     username: str = Field(
         min_length=3,
         max_length=32,
         pattern=r"^[a-zA-Z0-9_.]+$",
-        description="Username must be 3-32 characters, only letters, numbers, underscores and dots"
+        description="Username must be 3-32 characters, only letters, numbers, underscores and dots",
     )
     password: str = Field(min_length=8, max_length=64)
     confirm_password: str = Field(exclude=True, min_length=8, max_length=64)
@@ -45,7 +52,6 @@ class UserCreate(BaseModel):
     @classmethod
     def check_password_strength(cls, value: str):
         return validate_password_strength(value)
-
 
     @model_validator(mode="after")
     def check_passwords_match(self):
@@ -70,7 +76,7 @@ class UserUpdate(BaseModel):
         min_length=3,
         max_length=32,
         pattern=r"^[a-zA-Z0-9_.]+$",
-        description="Username must be 3-32 characters, only letters, numbers, underscores and dots"
+        description="Username must be 3-32 characters, only letters, numbers, underscores and dots",
     )
     height: float | None = Field(default=None, gt=0, lt=300)
     age: int | None = Field(default=None, gt=0, lt=120)
@@ -87,6 +93,7 @@ class UserUpdateEmail(BaseModel):
         if self.new_email != self.repeat_email:
             raise ValueError("Emails do not match.")
         return self
+
 
 class UserUpdatePassword(BaseModel):
     old_password: str = Field(min_length=8, max_length=64)
