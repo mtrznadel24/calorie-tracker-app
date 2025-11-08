@@ -10,7 +10,9 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.models.meals import Meal, MealIngredient, MealIngredientDetails, MealType
 from app.models.user import User
 from app.schemas.meals import MealCreate, MealIngredientCreate, MealIngredientUpdate
+from app.services.fridge import get_fridge_product
 from app.utils.crud import create_instance, delete_by_id, get_or_404, update_by_id
+from app.utils.crud_user import create_user_object_or_404, get_user_obj_or_404, delete_user_obj_or_404
 
 fields = [
     NutrientType.CALORIES,
@@ -19,25 +21,12 @@ fields = [
     NutrientType.CARBS,
 ]
 
-# Meal Utils
-
-
-async def get_user_meal_or_404(db: AsyncSession, user_id: int, meal_id: int) -> Meal:
-    result = await db.execute(
-        select(Meal).where(Meal.id == meal_id, Meal.user_id == user_id)
-    )
-    meal = result.scalars().first()
-    if not meal:
-        raise NotFoundError("Meal not found")
-    return meal
-
 
 # Meal
 
 
 async def create_meal(db: AsyncSession, user_id: int, data: MealCreate) -> Meal:
-    await get_or_404(db, User, user_id)
-    return await create_instance(db, Meal, data.model_dump())
+    return await create_user_object_or_404(db, user_id, Meal, data.model_dump())
 
 
 async def get_meal(
@@ -53,12 +42,11 @@ async def get_meal(
 
 
 async def get_meal_by_id(db: AsyncSession, user_id: int, meal_id: int) -> Meal:
-    return await get_user_meal_or_404(db, user_id, meal_id)
+    return await get_user_obj_or_404(db, user_id, Meal, meal_id)
 
 
 async def delete_meal(db: AsyncSession, user_id: int, meal_id: int) -> Meal:
-    await get_or_404(db, User, user_id)
-    return await delete_by_id(db, Meal, meal_id)
+    return await delete_user_obj_or_404(db, user_id, Meal, meal_id)
 
 
 async def get_meal_nutrient_sum(
@@ -163,13 +151,10 @@ async def get_macro_for_day(
 async def add_ingredient_to_meal(
     db: AsyncSession, user_id: int, meal_id: int, data: MealIngredientCreate
 ) -> MealIngredient:
-    await get_user_meal_or_404(db, user_id, meal_id)
+    await get_user_obj_or_404(db, user_id, Meal, meal_id)
     ingredient = MealIngredient(weight=data.weight, meal_id=meal_id)
+    ingredient.details = MealIngredientDetails(**data.details.model_dump())
     db.add(ingredient)
-    await db.flush()
-
-    details = MealIngredientDetails(id=ingredient.id, **data.details.model_dump())
-    db.add(details)
 
     try:
         await db.commit()
@@ -187,7 +172,7 @@ async def add_ingredient_to_meal(
 async def get_meal_ingredients(
     db: AsyncSession, user_id: int, meal_id: int
 ) -> Sequence[MealIngredient]:
-    await get_user_meal_or_404(db, user_id, meal_id)
+    await get_user_obj_or_404(db, user_id, Meal, meal_id)
     result = await db.execute(
         select(MealIngredient).where(MealIngredient.meal_id == meal_id)
     )
@@ -197,7 +182,7 @@ async def get_meal_ingredients(
 async def get_meal_ingredient_by_id(
     db: AsyncSession, user_id: int, meal_id, ingredient_id: int
 ) -> MealIngredient:
-    await get_user_meal_or_404(db, user_id, meal_id)
+    await get_user_obj_or_404(db, user_id, Meal, meal_id)
     result = await db.execute(
         select(MealIngredient).where(
             MealIngredient.id == ingredient_id, MealIngredient.meal_id == meal_id
@@ -213,7 +198,7 @@ async def update_meal_ingredient(
     ingredient_id: int,
     data: MealIngredientUpdate,
 ) -> MealIngredient:
-    await get_user_meal_or_404(db, user_id, meal_id)
+    await get_user_obj_or_404(db, user_id, Meal, meal_id)
     ingredient = await get_or_404(db, MealIngredient, ingredient_id)
 
     if data.weight:
@@ -232,13 +217,13 @@ async def update_meal_ingredient(
 async def delete_meal_ingredient(
     db: AsyncSession, user_id: int, meal_id, ingredient_id: int
 ) -> MealIngredient:
-    await get_user_meal_or_404(db, user_id, meal_id)
+    await get_user_obj_or_404(db, user_id, Meal, meal_id)
     return await delete_by_id(db, MealIngredient, ingredient_id)
 
 
 async def get_ingredient_details(
     db: AsyncSession, user_id: int, meal_id, ingredient_id: int
 ) -> MealIngredientDetails:
-    await get_user_meal_or_404(db, user_id, meal_id)
+    await get_user_obj_or_404(db, user_id, Meal, meal_id)
     ingredient = await get_or_404(db, MealIngredient, ingredient_id)
     return ingredient.details

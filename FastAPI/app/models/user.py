@@ -57,6 +57,7 @@ class Weight(Base):
     __table_args__ = (UniqueConstraint("user_id", "date", name="weight_user_date_uc"),)
 
     user = relationship("User", back_populates="weights")
+    measurements = relationship("Measurement", back_populates="weight_rel")
 
 
 class Measurement(Base):
@@ -81,3 +82,9 @@ class Measurement(Base):
     )
 
     user = relationship("User", back_populates="measurements")
+    weight_rel = relationship("Weight", back_populates="measurements")
+
+    @property
+    def weight(self) -> float | None:
+        return self.weight_rel.weight if self.weight_rel else None
+
