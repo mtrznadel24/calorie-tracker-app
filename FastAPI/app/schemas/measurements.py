@@ -2,8 +2,20 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import date
 
 
+
+
+class WeightCreate(BaseModel):
+    date: date = Field(default_factory=date.today)
+    weight: float | None = Field(default=None, gt=0, lt=300)
+
+class WeightRead(BaseModel):
+    id: int
+    date: date
+    weight: float
+
 class MeasurementsCreate(BaseModel):
     date: date = Field(default_factory=date.today)
+    weight: WeightCreate | None
     neck: float | None = Field(default=None, gt=0, lt=80)
     biceps: float | None = Field(default=None, gt=0, lt=80)
     chest: float | None = Field(default=None, gt=0, lt=200)
@@ -15,7 +27,7 @@ class MeasurementsCreate(BaseModel):
 class MeasurementsRead(BaseModel):
     id: int
     date: date
-    weight: float | None
+    weight: WeightRead | None
     neck: float | None
     biceps: float | None
     chest: float | None
@@ -25,12 +37,3 @@ class MeasurementsRead(BaseModel):
     calves: float | None
 
     model_config = ConfigDict(from_attributes=True)
-
-class WeightCreate(BaseModel):
-    date: date = Field(default_factory=date.today)
-    weight: float | None = Field(default=None, gt=0, lt=300)
-
-class WeightRead(BaseModel):
-    id: int
-    date: date
-    weight: float
