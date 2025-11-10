@@ -7,12 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import NutrientType
 from app.core.exceptions import ConflictError, NotFoundError
-from app.models.meals import Meal, MealIngredient, MealIngredientDetails, MealType
-from app.models.user import User
-from app.schemas.meals import MealCreate, MealIngredientCreate, MealIngredientUpdate
-from app.services.fridge import get_fridge_product
-from app.utils.crud import create_instance, delete_by_id, get_or_404, update_by_id
-from app.utils.crud_user import create_user_object_or_404, get_user_obj_or_404, delete_user_obj_or_404
+from app.meal.models import Meal, MealIngredient, MealIngredientDetails, MealType
+from app.meal.schemas import MealCreate, MealIngredientCreate, MealIngredientUpdate
+from app.utils.crud import delete_by_id, get_or_404, update_by_id
+from app.utils.crud_user_scoped import (
+    create_user_object_or_404,
+    delete_user_obj_or_404,
+    get_user_obj_or_404,
+)
 
 fields = [
     NutrientType.CALORIES,

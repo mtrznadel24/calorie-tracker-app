@@ -15,9 +15,9 @@ from app.core.security import (
     get_token_payload,
     verify_password,
 )
-from app.models.user import User
-from app.schemas.user import UserCreate
-from app.services.user import create_user
+from app.user.models import User
+from app.user.schemas import UserCreate
+from app.user.services import create_user
 
 
 async def authenticate_user(email: str, password: str, db: AsyncSession) -> User:

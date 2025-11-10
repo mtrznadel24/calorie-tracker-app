@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.meals import MealType
+from app.meal.models import MealType
 
 
 # Meal

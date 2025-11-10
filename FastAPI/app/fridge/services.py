@@ -4,13 +4,13 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import NutrientType
-from app.models.fridge import (
+from app.fridge.models import (
     FoodCategory,
     FridgeMeal,
     FridgeMealIngredient,
     FridgeProduct,
 )
-from app.schemas.fridge import (
+from app.fridge.schemas import (
     FridgeMealCreate,
     FridgeMealIngredientCreate,
     FridgeMealIngredientUpdate,

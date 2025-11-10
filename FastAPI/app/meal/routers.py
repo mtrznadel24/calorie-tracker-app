@@ -6,15 +6,15 @@ from fastapi import APIRouter
 from app.core.db import DbSessionDep
 from app.core.enums import NutrientType
 from app.core.security import UserDep
-from app.models.meals import Meal, MealIngredient, MealType
-from app.schemas.meals import (
+from app.meal.models import Meal, MealIngredient, MealType
+from app.meal.schemas import (
     MealCreate,
     MealIngredientCreate,
     MealIngredientRead,
     MealIngredientUpdate,
     MealRead,
 )
-from app.services.meals import (
+from app.meal.services import (
     add_ingredient_to_meal,
     create_meal,
     delete_meal,

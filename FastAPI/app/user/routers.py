@@ -2,9 +2,9 @@ from fastapi import APIRouter
 
 from app.core.db import DbSessionDep
 from app.core.security import UserDep
-from app.models import User
-from app.schemas.user import UserRead, UserUpdate, UserUpdateEmail, UserUpdatePassword
-from app.services.user import change_user_email, change_user_password, update_user
+from app.user.models import User
+from app.user.schemas import UserRead, UserUpdate, UserUpdateEmail, UserUpdatePassword
+from app.user.services import change_user_email, change_user_password, update_user
 
 router = APIRouter(prefix="/user", tags=["user"])
 

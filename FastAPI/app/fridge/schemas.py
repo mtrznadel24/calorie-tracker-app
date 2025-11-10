@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.fridge import FoodCategory
+from app.fridge.models import FoodCategory
 
 
 # Fridge product
