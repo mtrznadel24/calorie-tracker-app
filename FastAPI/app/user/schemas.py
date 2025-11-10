@@ -10,7 +10,7 @@ from pydantic import (
 )
 from zxcvbn import zxcvbn
 
-from app.models.user import Gender
+from app.user.models import Gender
 
 
 def validate_password_strength(password: str) -> str:

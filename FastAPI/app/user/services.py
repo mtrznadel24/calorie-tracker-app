@@ -1,13 +1,13 @@
-from sqlalchemy import select, desc
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError
 from app.core.security import get_hashed_password, verify_password
-from app.models.fridge import Fridge
-from app.models.user import User, Weight
-from app.schemas.user import UserCreate, UserUpdate, UserUpdateEmail, UserUpdatePassword
-from app.services.measurements import get_current_weight
+from app.fridge.models import Fridge
+from app.measurements.services import get_current_weight
+from app.user.models import User
+from app.user.schemas import UserCreate, UserUpdate, UserUpdateEmail, UserUpdatePassword
 from app.utils.crud import get_or_404, update_by_id
 
 # Users
@@ -87,9 +87,11 @@ async def get_user_bmr(db: AsyncSession, user) -> int:
     else:
         raise ConflictError("Unknown gender")
 
+
 async def get_user_tdee(db: AsyncSession, user) -> int:
     BMR = await get_user_bmr(db, user)
     return BMR * user.activity_level
+
 
 async def get_user_bmi(db: AsyncSession, user) -> float:
     if not user.height:

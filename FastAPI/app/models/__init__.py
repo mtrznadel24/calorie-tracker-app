@@ -1,6 +1,7 @@
-from app.models.fridge import Fridge, FridgeMeal, FridgeMealIngredient, FridgeProduct
-from app.models.meals import Meal, MealIngredient, MealIngredientDetails
-from app.models.user import Measurement, User, Weight
+from app.fridge.models import Fridge, FridgeMeal, FridgeMealIngredient, FridgeProduct
+from app.meal.models import Meal, MealIngredient, MealIngredientDetails
+from app.measurements.models import Measurement, Weight
+from app.user.models import User
 
 __all__ = [
     "User",

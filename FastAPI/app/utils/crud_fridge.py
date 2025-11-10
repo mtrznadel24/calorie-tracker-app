@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import Base
 from app.core.exceptions import ConflictError, NotFoundError
-from app.models.fridge import Fridge
+from app.fridge.models import Fridge
 from app.utils.crud import get_or_404
 
 T = TypeVar("T", bound=Base)

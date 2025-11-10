@@ -5,13 +5,13 @@ from fastapi import APIRouter
 
 from app.core.db import DbSessionDep
 from app.core.enums import NutrientType
-from app.models.fridge import (
+from app.fridge.models import (
     FoodCategory,
     FridgeMeal,
     FridgeMealIngredient,
     FridgeProduct,
 )
-from app.schemas.fridge import (
+from app.fridge.schemas import (
     FridgeMealCreate,
     FridgeMealIngredientCreate,
     FridgeMealIngredientRead,
@@ -22,7 +22,7 @@ from app.schemas.fridge import (
     FridgeProductRead,
     FridgeProductUpdate,
 )
-from app.services.fridge import (
+from app.fridge.services import (
     add_fridge_meal_ingredient,
     create_fridge_meal,
     create_fridge_product,
