@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.exceptions import ConflictError, NotFoundError, UnauthorizedError
 
@@ -17,3 +18,10 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(UnauthorizedError)
     async def unauthorized_exception_handler(request: Request, exc: UnauthorizedError):
         return JSONResponse(content={"message": str(exc)}, status_code=401)
+
+    @app.exception_handler(SQLAlchemyError)
+    async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+        return JSONResponse(
+            content={"message": "Database error"},
+            status_code=500,
+        )
