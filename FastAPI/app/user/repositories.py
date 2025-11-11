@@ -6,7 +6,7 @@ from app.user.models import User
 from app.user.schemas import UserCreate
 
 
-class UserRepository(BaseRepository):
+class UserRepository(BaseRepository[User]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, User)
 

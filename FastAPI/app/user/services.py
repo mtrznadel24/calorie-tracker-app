@@ -20,7 +20,7 @@ class UserService:
         self.repo = UserRepository(db)
 
 
-    async def create_user(self, db: AsyncSession, data: UserCreate) -> User:
+    async def create_user(self, data: UserCreate) -> User:
         if await self.repo.get_user_by_email(data.email):
             raise ConflictError("Email already registered")
         if await self.repo.get_user_by_username(data.username):
