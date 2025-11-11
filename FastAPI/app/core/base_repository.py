@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import Base
+from app.user.models import User
 
 T = TypeVar("T", bound=Base)
 
@@ -43,3 +44,28 @@ class BaseRepository(Generic[T]):
     async def get_by_id(self, object_id: int) -> T:
         result = await self.db.execute(select(self.model).where(self.model.id == object_id))
         return result.scalar_one_or_none()
+
+
+class UserScopedRepository(BaseRepository[T]):
+    def __init__(self, db: AsyncSession, model: Type[T]):
+        super().__init__(db, model)
+        if not hasattr(model, "user_id"):
+            raise ValueError(f"{model.__name__} does not have a user_id column")
+
+
+    async def get_by_id_for_user(self, user_id: int, object_id: int) -> T:
+        result = await self.db.execute(select(self.model).where(self.model.user_id == user_id, self.model.id == object_id))
+        return result.scalar_one_or_none()
+
+    async def delete_by_id_for_user(self, user_id: int, object_id: int) -> T:
+        obj = await self.get_by_id_for_user(self, user_id, object_id)
+        await self.db.delete(obj)
+        try:
+            await self.db.commit()
+        except IntegrityError:
+            await self.db.rollback()
+            raise
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
+        return obj
