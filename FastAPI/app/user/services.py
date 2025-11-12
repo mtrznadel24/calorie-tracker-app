@@ -1,11 +1,11 @@
-from sqlalchemy import select
+
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import get_hashed_password, verify_password
 from app.fridge.models import Fridge
-from app.measurements.services import get_current_weight
+from app.measurements.repositories import WeightRepository
 from app.user.models import User
 from app.user.repositories import UserRepository
 from app.user.schemas import UserCreate, UserUpdate, UserUpdateEmail, UserUpdatePassword
@@ -18,6 +18,7 @@ class UserService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repo = UserRepository(db)
+        self.weight_repo = WeightRepository(db)
 
 
     async def create_user(self, data: UserCreate) -> User:
@@ -84,7 +85,7 @@ class UserService:
     async def get_user_bmr(self, user) -> int:
         if not all([user.height, user.age, user.gender, user.activity_level]):
             raise ConflictError("Lack of user data")
-        weight_obj = await get_current_weight(user.user_id)
+        weight_obj = await self.weight_repo.get_current_weight(user.user_id)
         if not weight_obj:
             raise ConflictError("No weight data")
         weight = weight_obj.weight
@@ -106,7 +107,7 @@ class UserService:
             raise ConflictError("No height data")
         height = user.height
         height /= 100
-        weight_obj = await get_current_weight(user.user_id)
+        weight_obj = await self.weight_repo.get_current_weight(user.user_id)
         if not weight_obj:
             raise ConflictError("No weight data")
         weight = weight_obj.weight

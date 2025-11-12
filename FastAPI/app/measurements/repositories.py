@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -30,7 +32,7 @@ class MeasurementRepository(UserScopedRepository[Measurement]):
 
     async def get_measurements_list(
         self, user_id: int, offset: int = 0, limit: int = 10
-    ):
+    ) -> Sequence[Measurement]:
         result = await self.db.execute(
             select(Measurement)
             .options(selectinload(Measurement.weight))
@@ -69,7 +71,7 @@ class WeightRepository(UserScopedRepository[Weight]):
         )
         return result.scalars().first()
 
-    async def get_weights(self, user_id, offset: int = 0, limit: int = 10):
+    async def get_weights(self, user_id, offset: int = 0, limit: int = 10) -> Sequence[Weight | None]:
         result = await self.db.execute(
             select(Weight)
             .where(Weight.user_id == user_id)
