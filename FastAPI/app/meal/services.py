@@ -1,231 +1,141 @@
 from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy import func, select
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.enums import NutrientType
 from app.core.exceptions import ConflictError, NotFoundError
 from app.meal.models import Meal, MealIngredient, MealIngredientDetails, MealType
+from app.meal.repositories import MealRepository, MealIngredientRepository
 from app.meal.schemas import MealCreate, MealIngredientCreate, MealIngredientUpdate
-from app.utils.crud import delete_by_id, get_or_404, update_by_id
-from app.utils.crud_user_scoped import (
-    create_user_object_or_404,
-    delete_user_obj_or_404,
-    get_user_obj_or_404,
-)
-
-fields = [
-    NutrientType.CALORIES,
-    NutrientType.PROTEINS,
-    NutrientType.FATS,
-    NutrientType.CARBS,
-]
 
 
 # Meal
 
+class MealService:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        self.repo = MealRepository(db)
+        self.ingredient_repo = MealIngredientRepository(db)
 
-async def create_meal(db: AsyncSession, user_id: int, data: MealCreate) -> Meal:
-    return await create_user_object_or_404(db, user_id, Meal, data.model_dump())
-
-
-async def get_meal(
-    db: AsyncSession, user_id: int, meal_date: date, meal_type: MealType
-) -> Meal:
-    result = await db.execute(
-        select(Meal)
-        .where(Meal.user_id == user_id)
-        .where(Meal.date == meal_date)
-        .where(Meal.type == meal_type)
-    )
-    return result.scalar_one_or_none()
-
-
-async def get_meal_by_id(db: AsyncSession, user_id: int, meal_id: int) -> Meal:
-    return await get_user_obj_or_404(db, user_id, Meal, meal_id)
+    async def create_meal(self, user_id: int, data: MealCreate) -> Meal:
+        meal = Meal(**data.model_dump(exclude_unset=True), user_id=user_id)
+        self.repo.add(meal)
+        try:
+            await self.repo.commit_or_conflict()
+        except IntegrityError:
+            raise ConflictError("Meal already exists")
+        return meal
 
 
-async def delete_meal(db: AsyncSession, user_id: int, meal_id: int) -> Meal:
-    return await delete_user_obj_or_404(db, user_id, Meal, meal_id)
+    async def get_meal(
+        self, user_id: int, meal_date: date, meal_type: MealType
+    ) -> Meal:
+        return await self.repo.get_meal_by_date_and_type(user_id, meal_date, meal_type)
 
 
-async def get_meal_nutrient_sum(
-    db: AsyncSession, user_id: int, meal_id: int, nutrient_type: NutrientType
-) -> float:
-    stmt = (
-        select(
-            func.sum(
-                (
-                    getattr(MealIngredientDetails, nutrient_type.value + "_100g")
-                    * MealIngredient.weight
-                )
-                / 100
-            )
-        )
-        .select_from(MealIngredient)
-        .join(MealIngredientDetails)
-        .join(Meal)
-        .where(Meal.user_id == user_id, Meal.id == meal_id)
-    )
-    result = await db.execute(stmt)
-    return result.scalar() or 0.0
+    async def get_meal_by_id(self, user_id: int, meal_id: int) -> Meal:
+        return await self.repo.get_by_id_for_user(user_id, meal_id)
 
 
-async def get_meal_macro(
-    db: AsyncSession, user_id: int, meal_id: int
-) -> dict[str, float]:
-    stmt = (
-        select(
-            *[
-                func.sum(
-                    (
-                        getattr(MealIngredientDetails, field.value + "_100g")
-                        * MealIngredient.weight
-                    )
-                    / 100
-                ).alias(field.value)
-                for field in fields
-            ]
-        )
-        .select_from(MealIngredient)
-        .join(MealIngredientDetails)
-        .join(Meal)
-        .where(Meal.user_id == user_id, Meal.id == meal_id)
-    )
-    result = await db.execute(stmt)
-    row = result.one_or_none()
-    return {field.value: getattr(row, field.value) or 0.0 for field in fields}
+    async def delete_meal(self, user_id: int, meal_id: int) -> Meal:
+        return await self.repo.delete_by_id_for_user(user_id, meal_id)
 
 
-async def get_meals_nutrient_sum_for_day(
-    db: AsyncSession, user_id: int, meal_date: date, nutrient_type: NutrientType
-) -> float:
-    stmt = (
-        select(
-            func.sum(
-                (
-                    getattr(MealIngredientDetails, nutrient_type.value + "_100g")
-                    * MealIngredient.weight
-                )
-                / 100
-            )
-        )
-        .select_from(MealIngredient)
-        .join(MealIngredientDetails)
-        .join(Meal)
-        .where(Meal.user_id == user_id, Meal.date == meal_date)
-    )
-    result = await db.execute(stmt)
-    return result.scalar() or 0.0
+    async def get_meal_nutrient_sum(
+        self, user_id: int, meal_id: int, nutrient_type: NutrientType
+    ) -> float:
+        return await self.repo.get_meal_nutrient_sum(user_id, meal_id, nutrient_type)
 
 
-async def get_macro_for_day(
-    db: AsyncSession, user_id: int, meal_date: date
-) -> dict[str, float]:
-    stmt = (
-        select(
-            *[
-                func.sum(
-                    (
-                        getattr(MealIngredientDetails, field.value + "_100g")
-                        * MealIngredient.weight
-                    )
-                    / 100
-                ).alias(field.value)
-                for field in fields
-            ]
-        )
-        .select_from(MealIngredient)
-        .join(MealIngredientDetails)
-        .join(Meal)
-        .where(Meal.user_id == user_id, Meal.date == meal_date)
-    )
-    result = await db.execute(stmt)
-    row = result.one_or_none()
-    return {field.value: getattr(row, field.value) or 0.0 for field in fields}
+    async def get_meal_macro(
+        self, user_id: int, meal_id: int
+    ) -> dict[str, float]:
+        return await self.repo.get_meal_macro(user_id, meal_id)
 
 
-# Meal ingredient
+    async def get_meals_nutrient_sum_for_day(
+        self, user_id: int, meal_date: date, nutrient_type: NutrientType
+    ) -> float:
+        return await self.repo.get_meals_nutrient_sum_for_day(user_id, meal_date, nutrient_type)
 
 
-async def add_ingredient_to_meal(
-    db: AsyncSession, user_id: int, meal_id: int, data: MealIngredientCreate
-) -> MealIngredient:
-    await get_user_obj_or_404(db, user_id, Meal, meal_id)
-    ingredient = MealIngredient(weight=data.weight, meal_id=meal_id)
-    ingredient.details = MealIngredientDetails(**data.details.model_dump())
-    db.add(ingredient)
-
-    try:
-        await db.commit()
-    except IntegrityError:
-        await db.rollback()
-        raise ConflictError("Invalid ingredient data (constraint violation)")
-    except SQLAlchemyError:
-        await db.rollback()
-        raise
-
-    await db.refresh(ingredient)
-    return ingredient
+    async def get_macro_for_day(
+        self, user_id: int, meal_date: date
+    ) -> dict[str, float]:
+        return await self.repo.get_macro_for_day(user_id, meal_date)
 
 
-async def get_meal_ingredients(
-    db: AsyncSession, user_id: int, meal_id: int
-) -> Sequence[MealIngredient]:
-    await get_user_obj_or_404(db, user_id, Meal, meal_id)
-    result = await db.execute(
-        select(MealIngredient).where(MealIngredient.meal_id == meal_id)
-    )
-    return result.scalars().all()
+
+    # Meal ingredient
 
 
-async def get_meal_ingredient_by_id(
-    db: AsyncSession, user_id: int, meal_id, ingredient_id: int
-) -> MealIngredient:
-    await get_user_obj_or_404(db, user_id, Meal, meal_id)
-    result = await db.execute(
-        select(MealIngredient).where(
-            MealIngredient.id == ingredient_id, MealIngredient.meal_id == meal_id
-        )
-    )
-    return result.scalar_one_or_none()
+    async def add_ingredient_to_meal(
+        self, user_id: int, meal_id: int, data: MealIngredientCreate
+    ) -> MealIngredient:
+        await self.repo.get_by_id_for_user(user_id, meal_id)
+        ingredient = MealIngredient(weight=data.weight, meal_id=meal_id)
+        ingredient.details = MealIngredientDetails(**data.details.model_dump())
+        self.ingredient_repo.add(ingredient)
+
+        try:
+            await self.repo.commit_or_conflict()
+        except IntegrityError:
+            raise ConflictError("Ingredient already exists")
+
+        return await self.ingredient_repo.refresh_and_return(ingredient)
 
 
-async def update_meal_ingredient(
-    db: AsyncSession,
-    user_id: int,
-    meal_id,
-    ingredient_id: int,
-    data: MealIngredientUpdate,
-) -> MealIngredient:
-    await get_user_obj_or_404(db, user_id, Meal, meal_id)
-    ingredient = await get_or_404(db, MealIngredient, ingredient_id)
-
-    if data.weight:
-        await update_by_id(db, MealIngredient, ingredient_id, {"weight": data.weight})
-
-    if data.details:
-        if not ingredient.details:
-            raise NotFoundError("Ingredient details not found")
-        await update_by_id(
-            db, MealIngredientDetails, ingredient.details.id, data.details.model_dump()
-        )
-
-    return ingredient
+    async def get_meal_ingredients(
+        self, user_id: int, meal_id: int
+    ) -> Sequence[MealIngredient]:
+        await self.repo.get_by_id_for_user(user_id, meal_id)
+        return await self.ingredient_repo.get_meal_ingredients(meal_id)
 
 
-async def delete_meal_ingredient(
-    db: AsyncSession, user_id: int, meal_id, ingredient_id: int
-) -> MealIngredient:
-    await get_user_obj_or_404(db, user_id, Meal, meal_id)
-    return await delete_by_id(db, MealIngredient, ingredient_id)
+    async def get_meal_ingredient_by_id(
+        self, user_id: int, meal_id, ingredient_id: int
+    ) -> MealIngredient:
+        await self.repo.get_by_id_for_user(user_id, meal_id)
+        return await self.ingredient_repo.get_meal_ingredient_by_id(meal_id, ingredient_id)
 
 
-async def get_ingredient_details(
-    db: AsyncSession, user_id: int, meal_id, ingredient_id: int
-) -> MealIngredientDetails:
-    await get_user_obj_or_404(db, user_id, Meal, meal_id)
-    ingredient = await get_or_404(db, MealIngredient, ingredient_id)
-    return ingredient.details
+    async def update_meal_ingredient(
+        self, user_id: int,
+        meal_id,
+        ingredient_id: int,
+        data: MealIngredientUpdate,
+    ) -> MealIngredient:
+        await self.repo.get_by_id_for_user(user_id, meal_id)
+        ingredient = await self.ingredient_repo.get_by_id(ingredient_id)
+
+        if data.weight:
+            setattr(ingredient, "weight", data.weight)
+
+        if data.details:
+            if not ingredient.details:
+                raise NotFoundError("Ingredient details not found")
+            for field, value in data.details.model_dump().items():
+                setattr(ingredient, field, value)
+        try:
+            await self.ingredient_repo.commit_or_conflict()
+        except IntegrityError:
+            raise ConflictError("Ingredient already exists")
+
+        return await self.ingredient_repo.refresh_and_return(ingredient)
+
+
+    async def delete_meal_ingredient(
+        self, user_id: int, meal_id, ingredient_id: int
+    ) -> MealIngredient:
+        await self.repo.get_by_id_for_user( user_id, meal_id)
+        return await self.ingredient_repo.delete_by_id(ingredient_id)
+
+
+    async def get_ingredient_details(
+        self, user_id: int, meal_id, ingredient_id: int
+    ) -> MealIngredientDetails:
+        await self.repo.get_by_id_for_user(user_id, meal_id)
+        ingredient = await self.ingredient_repo.get_by_id(ingredient_id)
+        return ingredient.details

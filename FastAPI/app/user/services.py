@@ -1,8 +1,8 @@
 
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError
 from app.core.security import get_hashed_password, verify_password
 from app.fridge.models import Fridge
 from app.measurements.repositories import WeightRepository

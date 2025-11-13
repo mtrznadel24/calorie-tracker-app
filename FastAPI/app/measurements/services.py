@@ -1,19 +1,12 @@
 from collections.abc import Sequence
 
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import ConflictError
 from app.measurements.models import Measurement, Weight
 from app.measurements.repositories import MeasurementRepository, WeightRepository
 from app.measurements.schemas import MeasurementsCreate, WeightCreate
-from app.utils.crud_user_scoped import (
-    create_user_object_or_404,
-    delete_user_obj_or_404,
-    get_user_obj_or_404,
-)
 
 
 class MeasurementsService:
