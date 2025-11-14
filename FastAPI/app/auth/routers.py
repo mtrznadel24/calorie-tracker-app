@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.auth.depedencies import AuthServiceDep
+from app.auth.dependencies import AuthServiceDep
 from app.auth.schemas import Token
 from app.core.exceptions import UnauthorizedError
 from app.user.schemas import UserCreate
@@ -66,6 +66,8 @@ async def refresh_endpoint(
 
 
 @router.post("/logout", status_code=200)
-async def logout_endpoint(auth_service: AuthServiceDep, response: Response, refresh_token: str = Cookie(...)):
+async def logout_endpoint(
+    auth_service: AuthServiceDep, response: Response, refresh_token: str = Cookie(...)
+):
     response.delete_cookie(key="refresh_token")
     return await auth_service.logout_user(refresh_token)

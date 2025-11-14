@@ -29,22 +29,31 @@ async def create_meal_route(
 async def read_meal_route(
     meal_service: MealServiceDep, user: UserDep, meal_date: date, meal_type: MealType
 ) -> Meal:
-    return await meal_service.get_meal(user.id, meal_date=meal_date, meal_type=meal_type)
+    return await meal_service.get_meal(
+        user.id, meal_date=meal_date, meal_type=meal_type
+    )
 
 
 @router.get("/{meal_id}", response_model=MealRead)
-async def read_meal_by_id_route(meal_service: MealServiceDep, user: UserDep, meal_id: int) -> Meal:
+async def read_meal_by_id_route(
+    meal_service: MealServiceDep, user: UserDep, meal_id: int
+) -> Meal:
     return await meal_service.get_meal_by_id(user.id, meal_id=meal_id)
 
 
 @router.delete("/{meal_id}", response_model=MealRead)
-async def delete_meal_route(meal_service: MealServiceDep, user: UserDep, meal_id: int) -> Meal:
+async def delete_meal_route(
+    meal_service: MealServiceDep, user: UserDep, meal_id: int
+) -> Meal:
     return await meal_service.delete_meal(user.id, meal_id=meal_id)
 
 
 @router.get("/{meal_id}/nutrients", response_model=float)
 async def get_meal_nutrient_sum_route(
-    meal_service: MealServiceDep, user: UserDep, meal_id: int, nutrient_type: NutrientType
+    meal_service: MealServiceDep,
+    user: UserDep,
+    meal_id: int,
+    nutrient_type: NutrientType,
 ) -> float:
     return await meal_service.get_meal_nutrient_sum(
         user.id, meal_id=meal_id, nutrient_type=nutrient_type
@@ -82,10 +91,15 @@ async def get_macro_for_day_route(
 
 @router.post("/{meal_id}/ingredients", response_model=MealIngredientRead)
 async def add_ingredient_to_meal_route(
-    meal_service: MealServiceDep, user: UserDep, meal_id: int, meal_in: MealIngredientCreate
+    meal_service: MealServiceDep,
+    user: UserDep,
+    meal_id: int,
+    meal_in: MealIngredientCreate,
 ) -> MealIngredient:
 
-    return await meal_service.add_ingredient_to_meal(user.id, meal_id=meal_id, data=meal_in)
+    return await meal_service.add_ingredient_to_meal(
+        user.id, meal_id=meal_id, data=meal_in
+    )
 
 
 @router.get("/{meal_id}/ingredients", response_model=List[MealIngredientRead])

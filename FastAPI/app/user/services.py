@@ -1,4 +1,3 @@
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,16 +9,13 @@ from app.user.models import User
 from app.user.repositories import UserRepository
 from app.user.schemas import UserCreate, UserUpdate, UserUpdateEmail, UserUpdatePassword
 
-
-
 # Users
+
 
 class UserService:
     def __init__(self, db: AsyncSession):
-        self.db = db
         self.repo = UserRepository(db)
         self.weight_repo = WeightRepository(db)
-
 
     async def create_user(self, data: UserCreate) -> User:
         if await self.repo.get_user_by_email(data.email):
@@ -42,7 +38,6 @@ class UserService:
             raise ConflictError("User already exists")
         return await self.repo.refresh_and_return(user_instance)
 
-
     async def update_user(self, user_id: int, data: UserUpdate) -> User:
         user_instance = await self.repo.get_by_id(user_id)
 
@@ -55,10 +50,7 @@ class UserService:
             raise ConflictError("User already exists")
         return await self.repo.refresh_and_return(user_instance)
 
-
-    async def change_user_email(
-        self, user_id: int, data: UserUpdateEmail
-    ) -> User:
+    async def change_user_email(self, user_id: int, data: UserUpdateEmail) -> User:
         user = await self.repo.get_by_id(user_id)
         user.email = data.new_email
         try:
@@ -66,7 +58,6 @@ class UserService:
         except IntegrityError:
             raise ConflictError("Email already registered")
         return await self.repo.refresh_and_return(user)
-
 
     async def change_user_password(
         self, user_id: int, data: UserUpdatePassword
@@ -80,7 +71,6 @@ class UserService:
         except IntegrityError:
             raise ConflictError("Password update failed")
         return await self.repo.refresh_and_return(user)
-
 
     async def get_user_bmr(self, user) -> int:
         if not all([user.height, user.age, user.gender, user.activity_level]):
@@ -96,11 +86,9 @@ class UserService:
         else:
             raise ConflictError("Unknown gender")
 
-
     async def get_user_tdee(self, user) -> int:
         BMR = await self.get_user_bmr(user)
         return BMR * user.activity_level
-
 
     async def get_user_bmi(self, user) -> float:
         if not user.height:

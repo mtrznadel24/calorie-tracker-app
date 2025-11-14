@@ -11,17 +11,17 @@ from app.measurements.schemas import MeasurementsCreate, WeightCreate
 
 class MeasurementsService:
     def __init__(self, db: AsyncSession):
-        self.db = db
         self.repo = MeasurementRepository(db)
         self.weight_repo = WeightRepository(db)
-
 
     async def create_measurements(
         self, user_id: int, data: MeasurementsCreate
     ) -> Measurement:
         weight_in = None
         if data.weight is not None:
-            weight_in = Weight(**data.weight.model_dump(exclude_unset=True), user_id=user_id)
+            weight_in = Weight(
+                **data.weight.model_dump(exclude_unset=True), user_id=user_id
+            )
             self.weight_repo.add(weight_in)
             await self.repo.flush()
         measurements_in = Measurement(
@@ -43,26 +43,19 @@ class MeasurementsService:
             raise ConflictError(f"Measurements with date:{data.date} already exists")
         return await self.repo.refresh_and_return(measurements_in)
 
-
-    async def get_measurements(
-        self, user_id: int, measurement_id: int
-    ) -> Measurement:
+    async def get_measurements(self, user_id: int, measurement_id: int) -> Measurement:
         return await self.repo.get_by_id_for_user(user_id, measurement_id)
-
 
     async def get_latest_measurements(self, user_id: int) -> Measurement:
         return await self.repo.get_latest_measurements(user_id)
 
-
     async def get_previous_measurements(self, user_id: int) -> Measurement:
         return await self.repo.get_previous_measurements(user_id)
-
 
     async def get_measurements_list(
         self, user_id: int, offset: int = 0, limit: int = 10
     ) -> Sequence[Measurement]:
         return await self.repo.get_measurements_list(user_id, offset, limit)
-
 
     async def delete_measurements(
         self, user_id: int, measurements_id: int
@@ -88,26 +81,19 @@ class WeightService:
             raise ConflictError(f"Weight with date:{data.date} already exists")
         return await self.repo.refresh_and_return(weight)
 
-
     async def get_current_weight(self, user_id: int) -> Weight | None:
         return await self.repo.get_current_weight(user_id)
-
 
     async def get_previous_weight(self, user_id: int) -> Weight | None:
         return await self.repo.get_previous_weight(user_id)
 
-
-    async def get_user_weight(
-        self, user_id: int, weight_id: int
-    ) -> Weight | None:
+    async def get_user_weight(self, user_id: int, weight_id: int) -> Weight | None:
         return await self.repo.get_by_id_for_user(user_id, weight_id)
-
 
     async def get_user_weights(
         self, user_id: int, offset: int = 0, limit: int = 10
     ) -> Sequence[Weight | None]:
         return await self.repo.get_weights(user_id, offset, limit)
-
 
     async def delete_weight(self, user_id: int, weight_id: int) -> Weight:
         return await self.repo.delete_by_id_for_user(user_id, weight_id)

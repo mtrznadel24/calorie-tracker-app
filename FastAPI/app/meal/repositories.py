@@ -1,20 +1,21 @@
-from typing import Type
+from datetime import date
 
 from pyasn1.type.univ import Sequence
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.base_repository import UserScopedRepository, BaseRepository
+from app.core.base_repository import BaseRepository, UserScopedRepository
 from app.core.enums import NutrientType, nutrient_type_list
-from app.meal.models import Meal, MealType, MealIngredient, MealIngredientDetails
-from datetime import date
+from app.meal.models import Meal, MealIngredient, MealIngredientDetails, MealType
 
 
 class MealRepository(UserScopedRepository[Meal]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Meal)
 
-    async def get_meal_by_date_and_type(self, user_id: int, date: date, type: MealType) -> Meal:
+    async def get_meal_by_date_and_type(
+        self, user_id: int, date: date, type: MealType
+    ) -> Meal:
         result = await self.db.execute(
             select(Meal)
             .where(Meal.user_id == user_id)
@@ -23,13 +24,15 @@ class MealRepository(UserScopedRepository[Meal]):
         )
         return result.scalar_one_or_none()
 
-    async def get_meal_nutrient_sum(self, user_id: int, meal_id: int, nutrient_type: NutrientType) -> float:
+    async def get_meal_nutrient_sum(
+        self, user_id: int, meal_id: int, nutrient_type: NutrientType
+    ) -> float:
         stmt = (
             select(
                 func.sum(
                     (
-                            getattr(MealIngredientDetails, nutrient_type.value + "_100g")
-                            * MealIngredient.weight
+                        getattr(MealIngredientDetails, nutrient_type.value + "_100g")
+                        * MealIngredient.weight
                     )
                     / 100
                 )
@@ -42,9 +45,7 @@ class MealRepository(UserScopedRepository[Meal]):
         result = await self.db.execute(stmt)
         return result.scalar() or 0.0
 
-    async def get_meal_macro(
-        self, user_id: int, meal_id: int
-    ) -> dict[str, float]:
+    async def get_meal_macro(self, user_id: int, meal_id: int) -> dict[str, float]:
         stmt = (
             select(
                 *[
@@ -65,7 +66,10 @@ class MealRepository(UserScopedRepository[Meal]):
         )
         result = await self.db.execute(stmt)
         row = result.one_or_none()
-        return {field.value: getattr(row, field.value) or 0.0 for field in nutrient_type_list}
+        return {
+            field.value: getattr(row, field.value) or 0.0
+            for field in nutrient_type_list
+        }
 
     async def get_meals_nutrient_sum_for_day(
         self, user_id: int, meal_date: date, nutrient_type: NutrientType
@@ -111,7 +115,10 @@ class MealRepository(UserScopedRepository[Meal]):
         )
         result = await self.db.execute(stmt)
         row = result.one_or_none()
-        return {field.value: getattr(row, field.value) or 0.0 for field in nutrient_type_list}
+        return {
+            field.value: getattr(row, field.value) or 0.0
+            for field in nutrient_type_list
+        }
 
 
 class MealIngredientRepository(BaseRepository[MealIngredient]):
@@ -124,7 +131,9 @@ class MealIngredientRepository(BaseRepository[MealIngredient]):
         )
         return result.scalars().all()
 
-    async def get_meal_ingredient_by_id(self, meal_id: int, ingredient_id: int) -> MealIngredient:
+    async def get_meal_ingredient_by_id(
+        self, meal_id: int, ingredient_id: int
+    ) -> MealIngredient:
         result = await self.db.execute(
             select(MealIngredient).where(
                 MealIngredient.id == ingredient_id, MealIngredient.meal_id == meal_id

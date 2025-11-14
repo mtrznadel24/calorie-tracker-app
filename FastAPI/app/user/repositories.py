@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.base_repository import BaseRepository
 from app.user.models import User
-from app.user.schemas import UserCreate
 
 
 class UserRepository(BaseRepository[User]):

@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from fastapi import APIRouter
 
 from app.core.security import UserDep
-from app.measurements.depedencies import MeasurementsServiceDep, WeightServiceDep
+from app.measurements.dependencies import MeasurementsServiceDep, WeightServiceDep
 from app.measurements.models import Measurement, Weight
 from app.measurements.schemas import (
     MeasurementsCreate,
@@ -18,7 +18,9 @@ weights_router = APIRouter(prefix="/weights", tags=["weights"])
 
 @measurements_router.post("", response_model=MeasurementsRead)
 async def add_measurements(
-    measurements_service: MeasurementsServiceDep, user: UserDep, measurements_in: MeasurementsCreate
+    measurements_service: MeasurementsServiceDep,
+    user: UserDep,
+    measurements_in: MeasurementsCreate,
 ) -> Measurement:
     return await measurements_service.create_measurements(user.id, measurements_in)
 
@@ -31,12 +33,16 @@ async def read_measurements(
 
 
 @measurements_router.get("/latest", response_model=MeasurementsRead)
-async def read_latest_measurements(measurements_service: MeasurementsServiceDep, user: UserDep) -> Measurement:
+async def read_latest_measurements(
+    measurements_service: MeasurementsServiceDep, user: UserDep
+) -> Measurement:
     return await measurements_service.get_latest_measurements(user.id)
 
 
 @measurements_router.get("/previous", response_model=MeasurementsRead)
-async def read_previous_measurements(measurements_service: MeasurementsServiceDep, user: UserDep) -> Measurement:
+async def read_previous_measurements(
+    measurements_service: MeasurementsServiceDep, user: UserDep
+) -> Measurement:
     return await measurements_service.get_previous_measurements(user.id)
 
 
@@ -62,12 +68,16 @@ async def add_weight(
 
 
 @weights_router.get("/current", response_model=WeightRead)
-async def read_current_weight(weight_service: WeightServiceDep, user: UserDep) -> Weight:
+async def read_current_weight(
+    weight_service: WeightServiceDep, user: UserDep
+) -> Weight:
     return await weight_service.get_current_weight(user.id)
 
 
 @weights_router.get("/previous", response_model=WeightRead)
-async def read_previous_weight(weight_service: WeightServiceDep, user: UserDep) -> Weight:
+async def read_previous_weight(
+    weight_service: WeightServiceDep, user: UserDep
+) -> Weight:
     return await weight_service.get_previous_weight(user.id)
 
 
@@ -79,7 +89,9 @@ async def read_user_weight(
 
 
 @weights_router.get("", response_model=list[WeightRead])
-async def read_user_weights(weight_service: WeightServiceDep, user: UserDep) -> Sequence[Weight]:
+async def read_user_weights(
+    weight_service: WeightServiceDep, user: UserDep
+) -> Sequence[Weight]:
     return await weight_service.get_user_weights(user.id)
 
 
