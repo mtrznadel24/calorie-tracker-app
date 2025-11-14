@@ -1,10 +1,9 @@
 from fastapi import APIRouter
 
-from app.core.db import DbSessionDep
 from app.core.security import UserDep
+from app.user.dependencies import UserServiceDep
 from app.user.models import User
 from app.user.schemas import UserRead, UserUpdate, UserUpdateEmail, UserUpdatePassword
-from app.user.services import change_user_email, change_user_password, update_user
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -16,20 +15,20 @@ async def read_current_user(user: UserDep) -> User:
 
 @router.put("/me", response_model=UserRead)
 async def update_user_profile(
-    db: DbSessionDep, user: UserDep, data: UserUpdate
+    user_service: UserServiceDep, user: UserDep, data: UserUpdate
 ) -> User:
-    return await update_user(db, user.id, data)
+    return await user_service.update_user(user.id, data)
 
 
 @router.put("/me/email", response_model=UserRead)
 async def update_user_email(
-    db: DbSessionDep, user: UserDep, data: UserUpdateEmail
+    user_service: UserServiceDep, user: UserDep, data: UserUpdateEmail
 ) -> User:
-    return await change_user_email(db, user.id, data)
+    return await user_service.change_user_email(user.id, data)
 
 
 @router.put("/me/password", response_model=UserRead)
 async def update_user_password(
-    db: DbSessionDep, user: UserDep, data: UserUpdatePassword
+    user_service: UserServiceDep, user: UserDep, data: UserUpdatePassword
 ) -> User:
-    return await change_user_password(db, user.id, data)
+    return await user_service.change_user_password(user.id, data)
