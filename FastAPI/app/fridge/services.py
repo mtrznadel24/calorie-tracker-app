@@ -1,9 +1,9 @@
-from collections.abc import Sequence
+from typing import Sequence
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import NutrientType
+from app.utils.enums import NutrientType
 from app.core.exceptions import ConflictError
 from app.fridge.models import (
     FoodCategory,

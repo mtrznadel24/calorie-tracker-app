@@ -1,11 +1,11 @@
 from datetime import date
 
-from pyasn1.type.univ import Sequence
+from typing import Sequence
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.base_repository import BaseRepository, UserScopedRepository
-from app.core.enums import NutrientType, nutrient_type_list
+from app.utils.enums import NutrientType, nutrient_type_list
 from app.meal.models import Meal, MealIngredient, MealIngredientDetails, MealType
 
 
@@ -55,7 +55,7 @@ class MealRepository(UserScopedRepository[Meal]):
                             * MealIngredient.weight
                         )
                         / 100
-                    ).alias(field.value)
+                    ).label(field.value)
                     for field in nutrient_type_list
                 ]
             )
@@ -104,7 +104,7 @@ class MealRepository(UserScopedRepository[Meal]):
                             * MealIngredient.weight
                         )
                         / 100
-                    ).alias(field.value)
+                    ).label(field.value)
                     for field in nutrient_type_list
                 ]
             )
@@ -116,7 +116,7 @@ class MealRepository(UserScopedRepository[Meal]):
         result = await self.db.execute(stmt)
         row = result.one_or_none()
         return {
-            field.value: getattr(row, field.value) or 0.0
+            field.value: round(getattr(row, field.value) or 0.0, 1)
             for field in nutrient_type_list
         }
 

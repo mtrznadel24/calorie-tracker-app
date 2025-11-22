@@ -1,10 +1,10 @@
-from collections.abc import Sequence
+from typing import Sequence
 from datetime import date
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.enums import NutrientType
+from app.utils.enums import NutrientType
 from app.core.exceptions import ConflictError, NotFoundError
 from app.meal.models import Meal, MealIngredient, MealIngredientDetails, MealType
 from app.meal.repositories import MealIngredientRepository, MealRepository

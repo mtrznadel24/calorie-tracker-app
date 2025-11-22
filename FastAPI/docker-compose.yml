@@ -9,6 +9,17 @@ services:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+  db-test:
+    image: postgres
+    container_name: calorie-tracker-db-test
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: calorie-tracker-test
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
   backend:
     build: .
     container_name: calorie-tracker-api
@@ -31,6 +42,8 @@ services:
       - cache:/data
 volumes:
   postgres_data:
+    driver: local
+  test_postgres_data:
     driver: local
   cache:
     driver: local

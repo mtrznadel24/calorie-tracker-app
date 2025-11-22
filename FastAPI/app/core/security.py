@@ -7,17 +7,13 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from app.auth.services import get_current_user
 from app.core.config import settings
 from app.core.exceptions import UnauthorizedError
-from app.user.models import User
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 TokenDep = Annotated[str, Depends(oauth2_bearer)]
-
-UserDep = Annotated[User, Depends(get_current_user)]
 
 
 def get_hashed_password(password: str) -> str:

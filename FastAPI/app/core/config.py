@@ -1,5 +1,7 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
+import pathlib
 
+BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 
 class Settings(BaseSettings):
     DATABASE_URL: str
@@ -11,7 +13,9 @@ class Settings(BaseSettings):
     DEBUG_LOGS: bool = False
     PROJECT_NAME: str = "FastAPI App"
 
-    model_config = {"env_file": ".env", "extra": "ignore"}
+    model_config = {"env_file": str(BASE_DIR / ".env"),
+                    "env_file_encoding": "utf-8",
+                    "extra": "ignore"}
 
 
 settings = Settings()

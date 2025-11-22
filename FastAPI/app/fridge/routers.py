@@ -1,9 +1,9 @@
-from collections.abc import Sequence
+from typing import Sequence
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter
 
-from app.core.enums import NutrientType
+from app.utils.enums import NutrientType
 from app.fridge.dependencies import FridgeServiceDep
 from app.fridge.models import (
     FoodCategory,

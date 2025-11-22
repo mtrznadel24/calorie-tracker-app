@@ -1,11 +1,11 @@
-from collections.abc import Sequence
+from typing import Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.base_repository import BaseRepository
-from app.core.enums import NutrientType
+from app.utils.enums import NutrientType
 from app.core.exceptions import NotFoundError
 from app.fridge.models import (
     FoodCategory,
@@ -146,7 +146,7 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
                             * FridgeMealIngredient.weight
                         )
                         / 100
-                    ).alias(field.value)
+                    ).label(field.value)
                     for field in fields
                 ]
             )
@@ -195,13 +195,20 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
             )
         )
 
-        return result.scalar_one_or_none()
+        ingredient = result.scalar_one_or_none()
+
+        if ingredient is None:
+            raise NotFoundError("Ingredient not found")
+        return ingredient
+
+
 
     async def refresh_and_return_ingredient(self, ingredient) -> FridgeMealIngredient:
         await self.db.refresh(ingredient)
         return ingredient
 
-    async def delete_ingredient(self, ingredient) -> FridgeMealIngredient:
+    async def delete_ingredient(self, fridge_id: int, meal_id: int, ingredient_id: int) -> FridgeMealIngredient:
+        ingredient = await self.get_fridge_meal_ingredient(fridge_id, meal_id, ingredient_id)
         await self.db.delete(ingredient)
         try:
             await self.db.commit()
