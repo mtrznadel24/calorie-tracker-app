@@ -1,8 +1,8 @@
-from collections.abc import Sequence
+from typing import Sequence
 
 from fastapi import APIRouter
 
-from app.core.security import UserDep
+from app.auth.dependencies import UserDep
 from app.measurements.dependencies import MeasurementsServiceDep, WeightServiceDep
 from app.measurements.models import Measurement, Weight
 from app.measurements.schemas import (

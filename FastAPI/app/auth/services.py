@@ -1,7 +1,7 @@
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.repositories import AuthRepository, TokenRepository
+from app.auth.repositories import TokenRepository
 from app.core.exceptions import UnauthorizedError
 from app.core.security import (
     TokenDep,
@@ -19,25 +19,13 @@ class AuthService:
     def __init__(
         self, db: AsyncSession, user_service: UserService, token_repo: TokenRepository
     ):
-        self.repo = AuthRepository(db)
         self.user_service = user_service
         self.token_repo = token_repo
 
     async def authenticate_user(self, email: str, password: str) -> User:
-        user = await self.repo.get_user_by_email(email)
+        user = await self.user_service.repo.get_user_by_email(email)
         if not user or not verify_password(password, user.hashed_password):
             raise UnauthorizedError("Invalid credentials")
-        return user
-
-    async def get_current_user(self, token: TokenDep) -> User:
-        payload = get_token_payload(token)
-        username: str = payload.get("sub")
-        user_id: int = payload.get("id")
-        if username is None or user_id is None:
-            raise UnauthorizedError("Token payload missing")
-        user = await self.repo.get_by_id(user_id)
-        if user is None:
-            raise UnauthorizedError("User not found")
         return user
 
     async def register_user(self, user: UserCreate) -> tuple[str, str]:

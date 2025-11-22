@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.core.security import UserDep
+from app.auth.dependencies import UserDep
 from app.user.dependencies import UserServiceDep
 from app.user.models import User
 from app.user.schemas import UserRead, UserUpdate, UserUpdateEmail, UserUpdatePassword

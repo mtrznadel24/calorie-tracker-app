@@ -18,8 +18,8 @@ class Base(DeclarativeBase):
 
 
 class DBSessionManager:
-    def __init__(self, host: str):
-        self._engine = create_async_engine(host)
+    def __init__(self, host: str, **kwargs):
+        self._engine = create_async_engine(host, **kwargs)
         self._sessionmaker = async_sessionmaker(
             autocommit=False, autoflush=False, bind=self._engine
         )
