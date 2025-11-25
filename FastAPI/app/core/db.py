@@ -31,11 +31,11 @@ class DBSessionManager:
 
     @contextlib.asynccontextmanager
     async def connect(self) -> AsyncIterator[AsyncConnection]:
-        async with self._engine.begin() as conn:
+        """Połączenie BEZ automatycznej transakcji - dla testów"""
+        async with self._engine.connect() as conn:
             try:
                 yield conn
             except Exception:
-                await conn.rollback()
                 raise
 
     @contextlib.asynccontextmanager
@@ -48,6 +48,10 @@ class DBSessionManager:
             raise
         finally:
             await session.close()
+
+    @property
+    def engine(self):
+        return self._engine
 
 
 session_manager = DBSessionManager(settings.DATABASE_URL)

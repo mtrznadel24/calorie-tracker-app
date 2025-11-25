@@ -7,8 +7,7 @@ from app.auth.services import AuthService
 from app.core.db import DbSessionDep
 from app.core.exceptions import UnauthorizedError
 from app.core.redis_session import RedisDep
-from app.core.security import get_token_payload, TokenDep
-from app.user.dependencies import UserServiceDep
+from app.core.security import TokenDep, get_token_payload
 from app.user.models import User
 
 
@@ -19,10 +18,8 @@ def get_token_repository(redis: RedisDep) -> TokenRepository:
 TokenRepositoryDep = Annotated[TokenRepository, Depends(get_token_repository)]
 
 
-def get_auth_service(
-    db: DbSessionDep, user_service: UserServiceDep, redis: TokenRepositoryDep
-) -> AuthService:
-    return AuthService(db, user_service, redis)
+def get_auth_service(db: DbSessionDep, redis: TokenRepositoryDep) -> AuthService:
+    return AuthService(db, redis)
 
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
@@ -38,5 +35,6 @@ async def get_current_user(auth_service: AuthServiceDep, token: TokenDep) -> Use
     if user is None:
         raise UnauthorizedError("User not found")
     return user
+
 
 UserDep = Annotated[User, Depends(get_current_user)]

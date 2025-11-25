@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from app.core.exceptions import NotFoundError
-from app.meal.models import MealType, Meal
+from app.meal.models import Meal, MealType
 from app.meal.repositories import MealRepository
 
 
@@ -29,7 +29,6 @@ class TestUserScopeRepository:
 
         with pytest.raises(NotFoundError):
             await repo.get_by_id_for_user(999, meal.id)
-
 
     async def test_get_by_id_for_user_wrong_meal_id(self, session, user):
         repo = MealRepository(session)

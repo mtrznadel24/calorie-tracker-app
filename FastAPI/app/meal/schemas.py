@@ -1,5 +1,4 @@
-from datetime import date
-from typing import Optional
+import datetime as dt
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -8,14 +7,14 @@ from app.meal.models import MealType
 
 # Meal
 class MealCreate(BaseModel):
-    date: Optional[date] = None
+    date: dt.date | None = None
     type: MealType
 
 
 class MealRead(BaseModel):
     id: int
     user_id: int
-    date: date
+    date: dt.date
     type: MealType
 
     model_config = ConfigDict(from_attributes=True)
@@ -44,7 +43,7 @@ class MealIngredientProductRead(BaseModel):
 
 
 class MealIngredientProductUpdate(BaseModel):
-    product_name: str | None = Field(pattern=r"^[a-zA-Z0-9\s\-.]+$")
+    product_name: str | None = Field(default=None, pattern=r"^[a-zA-Z0-9\s\-.]+$")
     calories_100g: float | None = Field(default=None, gt=0)
     proteins_100g: float | None = Field(default=None, gt=0)
     fats_100g: float | None = Field(default=None, gt=0)

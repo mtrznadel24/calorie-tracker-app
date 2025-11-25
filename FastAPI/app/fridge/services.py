@@ -3,7 +3,6 @@ from typing import Sequence
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.utils.enums import NutrientType
 from app.core.exceptions import ConflictError
 from app.fridge.models import (
     FoodCategory,
@@ -20,6 +19,7 @@ from app.fridge.schemas import (
     FridgeProductCreate,
     FridgeProductUpdate,
 )
+from app.utils.enums import NutrientType
 
 
 # Fridge products
@@ -184,10 +184,9 @@ class FridgeService:
         self, fridge_id: int, meal_id: int, ingredient_id: int
     ) -> FridgeMealIngredient:
         await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
-        ingredient = await self.meal_repo.get_fridge_meal_ingredient(
-            fridge_id, meal_id, ingredient_id
-        )
         try:
-            return await self.meal_repo.delete_ingredient(ingredient)
+            return await self.meal_repo.delete_ingredient(
+                fridge_id, meal_id, ingredient_id
+            )
         except IntegrityError:
             raise ConflictError("Could not delete ingredient")

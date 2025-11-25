@@ -42,4 +42,4 @@ class Measurement(Base):
     )
 
     user = relationship("User", back_populates="measurements")
-    weight = relationship("Weight", back_populates="measurements")
+    weight = relationship("Weight", back_populates="measurements", lazy="joined")

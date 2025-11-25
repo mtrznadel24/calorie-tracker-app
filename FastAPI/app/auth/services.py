@@ -1,10 +1,8 @@
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.repositories import TokenRepository
 from app.core.exceptions import UnauthorizedError
 from app.core.security import (
-    TokenDep,
     create_access_token,
     create_refresh_token,
     get_token_payload,
@@ -16,10 +14,8 @@ from app.user.services import UserService
 
 
 class AuthService:
-    def __init__(
-        self, db: AsyncSession, user_service: UserService, token_repo: TokenRepository
-    ):
-        self.user_service = user_service
+    def __init__(self, db: AsyncSession, token_repo):
+        self.user_service = UserService(db)
         self.token_repo = token_repo
 
     async def authenticate_user(self, email: str, password: str) -> User:

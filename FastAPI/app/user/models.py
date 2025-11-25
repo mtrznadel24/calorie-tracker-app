@@ -9,7 +9,6 @@ from sqlalchemy.orm import relationship
 from app.core.db import Base
 
 
-
 class Gender(str, Enum):
     MALE = "male"
     FEMALE = "female"
@@ -23,12 +22,16 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
 
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
     updated_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
-        nullable=False
+        nullable=False,
     )
 
     height = Column(Float)
@@ -37,7 +40,11 @@ class User(Base):
     activity_level = Column(Float)
 
     fridge = relationship(
-        "Fridge", back_populates="user", uselist=False, cascade="all, delete-orphan"
+        "Fridge",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+        lazy="joined",
     )
     meals = relationship("Meal", back_populates="user", cascade="all, delete-orphan")
     weights = relationship(

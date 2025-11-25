@@ -1,12 +1,13 @@
 from datetime import date
-
 from typing import Sequence
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.base_repository import BaseRepository, UserScopedRepository
-from app.utils.enums import NutrientType, nutrient_type_list
+from app.core.exceptions import NotFoundError
 from app.meal.models import Meal, MealIngredient, MealIngredientDetails, MealType
+from app.utils.enums import NutrientType, nutrient_type_list
 
 
 class MealRepository(UserScopedRepository[Meal]):
@@ -139,4 +140,7 @@ class MealIngredientRepository(BaseRepository[MealIngredient]):
                 MealIngredient.id == ingredient_id, MealIngredient.meal_id == meal_id
             )
         )
-        return result.scalar_one_or_none()
+        ingredient = result.scalar_one_or_none()
+        if ingredient is None:
+            raise NotFoundError("Meal ingredient not found")
+        return ingredient

@@ -14,4 +14,3 @@ nutrient_type_list = [
     NutrientType.FATS,
     NutrientType.CARBS,
 ]
- 

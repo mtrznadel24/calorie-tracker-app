@@ -1,13 +1,14 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError
+from app.core.exceptions import ConflictError, UnauthorizedError
 from app.core.security import get_hashed_password, verify_password
 from app.fridge.models import Fridge
 from app.measurements.repositories import WeightRepository
 from app.user.models import User
 from app.user.repositories import UserRepository
 from app.user.schemas import UserCreate, UserUpdate, UserUpdateEmail, UserUpdatePassword
+from app.utils.health_metrics import calculate_bmi, calculate_bmr, calculate_tdee
 
 # Users
 
@@ -23,10 +24,10 @@ class UserService:
         if await self.repo.get_user_by_username(data.username):
             raise ConflictError("Username already registered")
         user_instance = User(
-            username=data.username,
+            **data.model_dump(exclude={"password", "confirm_password"}),
             hashed_password=get_hashed_password(data.password),
-            email=data.email,
         )
+
         self.repo.add(user_instance)
         await self.repo.flush()
 
@@ -41,7 +42,7 @@ class UserService:
     async def update_user(self, user_id: int, data: UserUpdate) -> User:
         user_instance = await self.repo.get_by_id(user_id)
 
-        for field, value in data.items():
+        for field, value in data.model_dump(exclude_unset=True).items():
             setattr(user_instance, field, value)
 
         try:
@@ -64,39 +65,38 @@ class UserService:
     ) -> User:
         user = await self.repo.get_by_id(user_id)
         if not verify_password(data.old_password, user.hashed_password):
-            raise ConflictError("Old password is incorrect")
-        user.hashed_password = get_hashed_password(data.password)
+            raise UnauthorizedError("Old password is incorrect")
+        user.hashed_password = get_hashed_password(data.new_password)
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Password update failed")
+            raise UnauthorizedError("Password update failed")
         return await self.repo.refresh_and_return(user)
 
     async def get_user_bmr(self, user) -> int:
-        if not all([user.height, user.age, user.gender, user.activity_level]):
+        if not all([user.height, user.age, user.gender]):
             raise ConflictError("Lack of user data")
-        weight_obj = await self.weight_repo.get_current_weight(user.user_id)
-        if not weight_obj:
+        weight_in = await self.weight_repo.get_current_weight(user.id)
+        if not weight_in:
             raise ConflictError("No weight data")
-        weight = weight_obj.weight
-        if user.gender == "M":
-            return int((10 * weight) + (6.25 * user.height) - (5 * user.age) + 5)
-        elif user.gender == "F":
-            return int((10 * weight) + (6.25 * user.height) - (5 * user.age) - 161)
-        else:
-            raise ConflictError("Unknown gender")
+        weight = weight_in.weight
+        try:
+            return calculate_bmr(weight, user.height, user.age, user.gender)
+        except ValueError:
+            raise ConflictError("No weight data")  # Conflict error ?
 
     async def get_user_tdee(self, user) -> int:
-        BMR = await self.get_user_bmr(user)
-        return BMR * user.activity_level
+        if not user.activity_level:
+            raise ConflictError("No activity level")
+        bmr = await self.get_user_bmr(user)
+        return calculate_tdee(bmr, user.activity_level)
 
     async def get_user_bmi(self, user) -> float:
         if not user.height:
             raise ConflictError("No height data")
         height = user.height
-        height /= 100
-        weight_obj = await self.weight_repo.get_current_weight(user.user_id)
+        weight_obj = await self.weight_repo.get_current_weight(user.id)
         if not weight_obj:
             raise ConflictError("No weight data")
         weight = weight_obj.weight
-        return round((weight / height**2), 2)
+        return calculate_bmi(weight, height)

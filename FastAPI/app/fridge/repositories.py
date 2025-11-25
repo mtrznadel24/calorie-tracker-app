@@ -5,7 +5,6 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.base_repository import BaseRepository
-from app.utils.enums import NutrientType
 from app.core.exceptions import NotFoundError
 from app.fridge.models import (
     FoodCategory,
@@ -13,6 +12,7 @@ from app.fridge.models import (
     FridgeMealIngredient,
     FridgeProduct,
 )
+from app.utils.enums import NutrientType
 
 
 class FridgeProductRepository(BaseRepository[FridgeProduct]):
@@ -201,14 +201,16 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
             raise NotFoundError("Ingredient not found")
         return ingredient
 
-
-
     async def refresh_and_return_ingredient(self, ingredient) -> FridgeMealIngredient:
         await self.db.refresh(ingredient)
         return ingredient
 
-    async def delete_ingredient(self, fridge_id: int, meal_id: int, ingredient_id: int) -> FridgeMealIngredient:
-        ingredient = await self.get_fridge_meal_ingredient(fridge_id, meal_id, ingredient_id)
+    async def delete_ingredient(
+        self, fridge_id: int, meal_id: int, ingredient_id: int
+    ) -> FridgeMealIngredient:
+        ingredient = await self.get_fridge_meal_ingredient(
+            fridge_id, meal_id, ingredient_id
+        )
         await self.db.delete(ingredient)
         try:
             await self.db.commit()
