@@ -1,9 +1,7 @@
-from typing import Sequence
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from fastapi import APIRouter
 
-from app.utils.enums import NutrientType
 from app.fridge.dependencies import FridgeServiceDep
 from app.fridge.models import (
     FoodCategory,
@@ -22,6 +20,7 @@ from app.fridge.schemas import (
     FridgeProductRead,
     FridgeProductUpdate,
 )
+from app.utils.enums import NutrientType
 
 router = APIRouter(prefix="/fridges", tags=["fridges"])
 

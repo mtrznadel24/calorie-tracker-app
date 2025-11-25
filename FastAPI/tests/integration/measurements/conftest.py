@@ -2,7 +2,29 @@ from datetime import date
 
 import pytest_asyncio
 
-from app.measurements.models import Weight, Measurement
+from app.measurements.models import Measurement, Weight
+from app.measurements.repositories import MeasurementRepository, WeightRepository
+from app.measurements.services import MeasurementsService, WeightService
+
+
+@pytest_asyncio.fixture
+async def measurements_repo(session):
+    return MeasurementRepository(session)
+
+
+@pytest_asyncio.fixture
+async def weight_repo(session):
+    return WeightRepository(session)
+
+
+@pytest_asyncio.fixture
+async def measurements_service(session):
+    return MeasurementsService(session)
+
+
+@pytest_asyncio.fixture
+async def weight_service(session):
+    return WeightService(session)
 
 
 @pytest_asyncio.fixture
@@ -13,11 +35,14 @@ async def sample_weight(session, user):
     await session.refresh(weight)
     return weight
 
+
 @pytest_asyncio.fixture
 async def sample_weights(session, user):
-    weights = [Weight(user_id=user.id, date=date(2022, 1, 1), weight=80),
-               Weight(user_id=user.id, date=date(2022, 1, 2), weight=82),
-               Weight(user_id=user.id, date=date(2022, 1, 3), weight=84)]
+    weights = [
+        Weight(user_id=user.id, date=date(2022, 1, 1), weight=80),
+        Weight(user_id=user.id, date=date(2022, 1, 2), weight=82),
+        Weight(user_id=user.id, date=date(2022, 1, 3), weight=84),
+    ]
     session.add_all(weights)
     await session.commit()
     for w in weights:
@@ -28,21 +53,22 @@ async def sample_weights(session, user):
 @pytest_asyncio.fixture
 async def sample_measurement(session, user, sample_weight):
     measurement = Measurement(
-                        user_id=user.id,
-                        date=date(2022, 1, 1),
-                        weight_id=sample_weight.id,
-                        neck=38.0,
-                        biceps=32.5,
-                        chest=100.0,
-                        waist=85.0,
-                        hips=95.0,
-                        thighs=55.0,
-                        calves=37.0,
-                    )
+        user_id=user.id,
+        date=date(2022, 1, 1),
+        weight_id=sample_weight.id,
+        neck=38.0,
+        biceps=32.5,
+        chest=100.0,
+        waist=85.0,
+        hips=95.0,
+        thighs=55.0,
+        calves=37.0,
+    )
     session.add(measurement)
     await session.commit()
     await session.refresh(measurement)
     return measurement
+
 
 @pytest_asyncio.fixture
 async def sample_measurements(session, user, sample_weights):

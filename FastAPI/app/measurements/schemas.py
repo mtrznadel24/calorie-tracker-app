@@ -16,7 +16,7 @@ class WeightRead(BaseModel):
 
 class MeasurementsCreate(BaseModel):
     date: dt.date = Field(default_factory=dt.date.today)
-    weight: WeightCreate | None
+    weight: WeightCreate | None = Field(default=None)
     neck: float | None = Field(default=None, gt=0, lt=80)
     biceps: float | None = Field(default=None, gt=0, lt=80)
     chest: float | None = Field(default=None, gt=0, lt=200)

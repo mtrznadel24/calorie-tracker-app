@@ -1,14 +1,14 @@
-from typing import Sequence
 from datetime import date
+from typing import Sequence
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.utils.enums import NutrientType
 from app.core.exceptions import ConflictError, NotFoundError
 from app.meal.models import Meal, MealIngredient, MealIngredientDetails, MealType
 from app.meal.repositories import MealIngredientRepository, MealRepository
 from app.meal.schemas import MealCreate, MealIngredientCreate, MealIngredientUpdate
+from app.utils.enums import NutrientType
 
 # Meal
 
@@ -105,8 +105,8 @@ class MealService:
         if data.details:
             if not ingredient.details:
                 raise NotFoundError("Ingredient details not found")
-            for field, value in data.details.model_dump().items():
-                setattr(ingredient, field, value)
+            for field, value in data.details.model_dump(exclude_unset=True).items():
+                setattr(ingredient.details, field, value)
         try:
             await self.ingredient_repo.commit_or_conflict()
         except IntegrityError:

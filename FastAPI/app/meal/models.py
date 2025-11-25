@@ -2,7 +2,7 @@ from enum import Enum
 
 from sqlalchemy import Column, Date
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy import Float, ForeignKey, Integer, String
+from sqlalchemy import Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.core.db import Base
@@ -25,9 +25,16 @@ class Meal(Base):
     date = Column(Date, index=True, nullable=False)
     type = Column(SqlEnum(MealType, name="meal_type"), index=True, nullable=False)
 
+    __table_args__ = (
+        UniqueConstraint("user_id", "date", "type", name="uq_user_meal_per_day_type"),
+    )
+
     user = relationship("User", back_populates="meals")
     ingredients = relationship(
-        "MealIngredient", back_populates="meal", cascade="all, delete-orphan"
+        "MealIngredient",
+        back_populates="meal",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
@@ -45,6 +52,7 @@ class MealIngredient(Base):
         back_populates="meal_ingredient",
         uselist=False,
         cascade="all, delete-orphan",
+        lazy="joined",
     )
 
 

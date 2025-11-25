@@ -3,7 +3,6 @@ from typing import Dict, List, Sequence
 
 from fastapi import APIRouter
 
-from app.utils.enums import NutrientType
 from app.auth.dependencies import UserDep
 from app.meal.dependencies import MealServiceDep
 from app.meal.models import Meal, MealIngredient, MealType
@@ -14,6 +13,7 @@ from app.meal.schemas import (
     MealIngredientUpdate,
     MealRead,
 )
+from app.utils.enums import NutrientType
 
 router = APIRouter(prefix="/meals", tags=["meals"])
 

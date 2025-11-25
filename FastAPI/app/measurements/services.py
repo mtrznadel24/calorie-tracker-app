@@ -69,7 +69,7 @@ class WeightService:
         self.repo = WeightRepository(db)
 
     async def create_weight(self, user_id: int, data: WeightCreate) -> Weight:
-        weight = self.repo.get_weight_by_date(user_id, data.date)
+        weight = await self.repo.get_weight_by_date(user_id, data.date)
         if weight is None:
             weight = Weight(**data.model_dump(exclude_unset=True), user_id=user_id)
             self.repo.add(weight)
