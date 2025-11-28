@@ -16,7 +16,7 @@ class MealRepository(UserScopedRepository[Meal]):
 
     async def get_meal_by_date_and_type(
         self, user_id: int, date: date, type: MealType
-    ) -> Meal:
+    ) -> Meal | None:
         result = await self.db.execute(
             select(Meal)
             .where(Meal.user_id == user_id)

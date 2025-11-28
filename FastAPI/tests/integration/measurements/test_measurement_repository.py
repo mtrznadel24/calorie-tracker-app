@@ -10,7 +10,7 @@ class TestMeasurementRepository:
 
         result = await measurements_repo.get_latest_measurements(user.id)
 
-        assert result == sample_measurements[2]
+        assert result == sample_measurements[-1]
 
     async def test_get_latest_measurements_no_measurements(
         self, measurements_repo, user
@@ -26,7 +26,7 @@ class TestMeasurementRepository:
 
         result = await measurements_repo.get_previous_measurements(user.id)
 
-        assert result == sample_measurements[1]
+        assert result == sample_measurements[-2]
 
     async def test_get_previous_measurements_no_measurements(
         self, measurements_repo, user

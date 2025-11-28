@@ -4,6 +4,7 @@ import pytest
 
 from app.meal.models import MealType
 from app.utils.enums import NutrientType
+from tests.integration.meal.conftest import create_meals_with_ingredients
 
 
 @pytest.mark.integration
@@ -126,17 +127,7 @@ class TestMealRepository:
     async def test_get_meals_nutrient_sum_for_day_many_meals(
         self, meal_repo, user, meal_factory, ingredient_factory
     ):
-        meal1 = await meal_factory(date(2022, 1, 1), MealType.BREAKFAST)
-        await ingredient_factory(meal1, 50, "Banana", 89, 1.1, 0.3, 23)
-        await ingredient_factory(meal1, 100, "Chicken breast", 157, 32, 3.2, 0)
-        await ingredient_factory(meal1, 200, "Rice", 130, 2.7, 0.3, 28)
-        await ingredient_factory(meal1, 20, "Egg", 155, 13, 11, 1.1)
-
-        meal2 = await meal_factory(date(2022, 1, 1), MealType.DINNER)
-        await ingredient_factory(meal2, 100, "product1", 89, 1.1, 0.3, 23)
-        await ingredient_factory(meal2, 200, "product2", 157, 32, 3.2, 0)
-        await ingredient_factory(meal2, 400, "product3", 130, 2.7, 0.3, 28)
-        await ingredient_factory(meal2, 40, "product4", 155, 13, 11, 1.1)
+        await create_meals_with_ingredients(meal_factory, ingredient_factory)
 
         result = await meal_repo.get_meals_nutrient_sum_for_day(
             user.id, date(2022, 1, 1), NutrientType.CALORIES
@@ -154,19 +145,7 @@ class TestMealRepository:
     async def test_get_macro_for_a_day_many_meals(
         self, meal_repo, user, meal_factory, ingredient_factory
     ):
-        meal1 = await meal_factory(date(2022, 1, 1), MealType.BREAKFAST)
-
-        await ingredient_factory(meal1, 50, "Banana", 89, 1.1, 0.2, 23)
-        await ingredient_factory(meal1, 100, "Chicken breast", 157, 32, 3.2, 0)
-        await ingredient_factory(meal1, 200, "Rice", 130, 2.7, 0.2, 28)
-        await ingredient_factory(meal1, 20, "Egg", 155, 13, 11, 1.1)
-
-        meal2 = await meal_factory(date(2022, 1, 1), MealType.DINNER)
-
-        await ingredient_factory(meal2, 100, "product1", 89, 1.1, 0.2, 23)
-        await ingredient_factory(meal2, 200, "product2", 157, 32, 3.2, 0)
-        await ingredient_factory(meal2, 400, "product3", 130, 2.7, 0.2, 28)
-        await ingredient_factory(meal2, 40, "product4", 155, 13, 11, 1.1)
+        await create_meals_with_ingredients(meal_factory, ingredient_factory)
 
         result = await meal_repo.get_macro_for_day(user.id, date(2022, 1, 1))
 

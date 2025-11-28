@@ -24,27 +24,25 @@ async def add_measurements(
 ) -> Measurement:
     return await measurements_service.create_measurements(user.id, measurements_in)
 
-
-@measurements_router.get("/{measurements_id}", response_model=MeasurementsRead)
-async def read_measurements(
-    measurements_service: MeasurementsServiceDep, user: UserDep, measurements_id: int
-) -> Measurement:
-    return await measurements_service.get_measurements(user.id, measurements_id)
-
-
-@measurements_router.get("/latest", response_model=MeasurementsRead)
+@measurements_router.get("/latest", response_model=MeasurementsRead | None)
 async def read_latest_measurements(
     measurements_service: MeasurementsServiceDep, user: UserDep
 ) -> Measurement:
     return await measurements_service.get_latest_measurements(user.id)
 
 
-@measurements_router.get("/previous", response_model=MeasurementsRead)
+@measurements_router.get("/previous", response_model=MeasurementsRead | None)
 async def read_previous_measurements(
     measurements_service: MeasurementsServiceDep, user: UserDep
 ) -> Measurement:
     return await measurements_service.get_previous_measurements(user.id)
 
+
+@measurements_router.get("/{measurements_id}", response_model=MeasurementsRead)
+async def read_measurements(
+    measurements_service: MeasurementsServiceDep, user: UserDep, measurements_id: int
+) -> Measurement:
+    return await measurements_service.get_measurements(user.id, measurements_id)
 
 @measurements_router.get("", response_model=list[MeasurementsRead])
 async def read_measurements_list(
@@ -67,14 +65,14 @@ async def add_weight(
     return await weight_service.create_weight(user.id, weight_in)
 
 
-@weights_router.get("/current", response_model=WeightRead)
+@weights_router.get("/current", response_model=WeightRead | None)
 async def read_current_weight(
     weight_service: WeightServiceDep, user: UserDep
 ) -> Weight:
     return await weight_service.get_current_weight(user.id)
 
 
-@weights_router.get("/previous", response_model=WeightRead)
+@weights_router.get("/previous", response_model=WeightRead | None)
 async def read_previous_weight(
     weight_service: WeightServiceDep, user: UserDep
 ) -> Weight:

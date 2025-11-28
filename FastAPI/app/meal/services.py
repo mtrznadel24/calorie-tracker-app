@@ -29,7 +29,7 @@ class MealService:
 
     async def get_meal(
         self, user_id: int, meal_date: date, meal_type: MealType
-    ) -> Meal:
+    ) -> Meal | None:
         return await self.repo.get_meal_by_date_and_type(user_id, meal_date, meal_type)
 
     async def get_meal_by_id(self, user_id: int, meal_id: int) -> Meal:
@@ -41,9 +41,11 @@ class MealService:
     async def get_meal_nutrient_sum(
         self, user_id: int, meal_id: int, nutrient_type: NutrientType
     ) -> float:
+        await self.repo.get_by_id_for_user(user_id, meal_id)
         return await self.repo.get_meal_nutrient_sum(user_id, meal_id, nutrient_type)
 
     async def get_meal_macro(self, user_id: int, meal_id: int) -> dict[str, float]:
+        await self.repo.get_by_id_for_user(user_id, meal_id)
         return await self.repo.get_meal_macro(user_id, meal_id)
 
     async def get_meals_nutrient_sum_for_day(

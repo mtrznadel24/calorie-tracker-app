@@ -35,6 +35,14 @@ async def sample_weight(session, user):
     await session.refresh(weight)
     return weight
 
+@pytest_asyncio.fixture
+async def sample_weight_other_user(session, other_user):
+    weight = Weight(user_id=other_user.id, date=date(2022, 1, 1), weight=80)
+    session.add(weight)
+    await session.commit()
+    await session.refresh(weight)
+    return weight
+
 
 @pytest_asyncio.fixture
 async def sample_weights(session, user):
@@ -54,6 +62,25 @@ async def sample_weights(session, user):
 async def sample_measurement(session, user, sample_weight):
     measurement = Measurement(
         user_id=user.id,
+        date=date(2022, 1, 1),
+        weight_id=sample_weight.id,
+        neck=38.0,
+        biceps=32.5,
+        chest=100.0,
+        waist=85.0,
+        hips=95.0,
+        thighs=55.0,
+        calves=37.0,
+    )
+    session.add(measurement)
+    await session.commit()
+    await session.refresh(measurement)
+    return measurement
+
+@pytest_asyncio.fixture
+async def sample_measurement_other_user(session, other_user, sample_weight):
+    measurement = Measurement(
+        user_id=other_user.id,
         date=date(2022, 1, 1),
         weight_id=sample_weight.id,
         neck=38.0,
