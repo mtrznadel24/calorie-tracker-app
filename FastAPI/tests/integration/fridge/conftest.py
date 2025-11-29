@@ -1,5 +1,9 @@
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 
+from app.auth.dependencies import get_current_user
+from app.core.db import get_db
+from app.fridge.dependencies import get_fridge
 from app.fridge.models import (
     FoodCategory,
     Fridge,
@@ -9,6 +13,7 @@ from app.fridge.models import (
 )
 from app.fridge.repositories import FridgeMealRepository, FridgeProductRepository
 from app.fridge.services import FridgeService
+from app.main import get_app
 
 
 @pytest_asyncio.fixture
@@ -33,6 +38,27 @@ async def fridge(session, user):
     await session.commit()
     await session.refresh(fridge)
     return fridge
+
+@pytest_asyncio.fixture
+async def client_with_fridge(session, user, fridge):
+    async def override_get_db():
+        yield session
+
+    async def override_get_current_user():
+        return user
+
+    async def override_get_fridge():
+        return fridge
+
+    app = get_app()
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_fridge] = override_get_fridge
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+        yield client
+
+    app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture

@@ -127,6 +127,7 @@ class FridgeService:
     async def get_fridge_meal_nutrient_sum(
         self, fridge_id: int, meal_id: int, nutrient_type: NutrientType
     ) -> float:
+        await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
         return await self.meal_repo.get_fridge_meal_nutrient_sum(
             fridge_id, meal_id, nutrient_type
         )
@@ -134,6 +135,7 @@ class FridgeService:
     async def get_fridge_meal_macro(
         self, fridge_id: int, meal_id: int
     ) -> dict[str, float]:
+        await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
         return await self.meal_repo.get_fridge_meal_macro(fridge_id, meal_id)
 
     # Fridge meal ingredients
@@ -151,6 +153,7 @@ class FridgeService:
     async def get_fridge_meal_ingredients(
         self, fridge_id: int, meal_id: int
     ) -> Sequence[FridgeMealIngredient]:
+        await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
         return await self.meal_repo.get_fridge_meal_ingredients(fridge_id, meal_id)
 
     async def get_fridge_meal_ingredient(

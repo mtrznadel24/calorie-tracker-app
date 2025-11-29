@@ -1,6 +1,6 @@
 import datetime as dt
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class WeightCreate(BaseModel):
@@ -13,6 +13,8 @@ class WeightRead(BaseModel):
     date: dt.date
     weight: float
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class MeasurementsCreate(BaseModel):
     date: dt.date = Field(default_factory=dt.date.today)
@@ -24,6 +26,21 @@ class MeasurementsCreate(BaseModel):
     hips: float | None = Field(default=None, gt=0, lt=200)
     thighs: float | None = Field(default=None, gt=0, lt=150)
     calves: float | None = Field(default=None, gt=0, lt=80)
+
+    @model_validator(mode="after")
+    def check_at_least_one(cls, values):
+        if not any([
+            values.weight,
+            values.neck,
+            values.biceps,
+            values.chest,
+            values.waist,
+            values.hips,
+            values.thighs,
+            values.calves,
+        ]):
+            raise ValueError("At least one measurement or weight must be provided")
+        return values
 
 
 class MeasurementsRead(BaseModel):

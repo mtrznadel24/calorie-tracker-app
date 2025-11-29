@@ -18,15 +18,15 @@ from app.utils.enums import NutrientType
 router = APIRouter(prefix="/meals", tags=["meals"])
 
 
-@router.post("/", response_model=MealRead)
-async def create_meal_route(
+@router.post("", response_model=MealRead)
+async def add_meal(
     meal_service: MealServiceDep, user: UserDep, meal_in: MealCreate
 ) -> Meal:
     return await meal_service.create_meal(user.id, data=meal_in)
 
 
-@router.get("/lookup", response_model=MealRead)
-async def read_meal_route(
+@router.get("/lookup", response_model=MealRead | None)
+async def read_meal(
     meal_service: MealServiceDep, user: UserDep, meal_date: date, meal_type: MealType
 ) -> Meal:
     return await meal_service.get_meal(
@@ -35,40 +35,21 @@ async def read_meal_route(
 
 
 @router.get("/{meal_id}", response_model=MealRead)
-async def read_meal_by_id_route(
+async def read_meal_by_id(
     meal_service: MealServiceDep, user: UserDep, meal_id: int
 ) -> Meal:
     return await meal_service.get_meal_by_id(user.id, meal_id=meal_id)
 
 
 @router.delete("/{meal_id}", response_model=MealRead)
-async def delete_meal_route(
+async def delete_meal(
     meal_service: MealServiceDep, user: UserDep, meal_id: int
 ) -> Meal:
     return await meal_service.delete_meal(user.id, meal_id=meal_id)
 
 
-@router.get("/{meal_id}/nutrients", response_model=float)
-async def get_meal_nutrient_sum_route(
-    meal_service: MealServiceDep,
-    user: UserDep,
-    meal_id: int,
-    nutrient_type: NutrientType,
-) -> float:
-    return await meal_service.get_meal_nutrient_sum(
-        user.id, meal_id=meal_id, nutrient_type=nutrient_type
-    )
-
-
-@router.get("/{meal_id}/macro", response_model=Dict[str, float])
-async def get_meal_macro_route(
-    meal_service: MealServiceDep, user: UserDep, meal_id: int
-) -> Dict[str, float]:
-    return await meal_service.get_meal_macro(user.id, meal_id=meal_id)
-
-
 @router.get("/daily/nutrients", response_model=float)
-async def get_meals_nutrient_sum_for_day_route(
+async def get_meals_nutrient_sum_for_day(
     meal_service: MealServiceDep,
     user: UserDep,
     meal_date: date,
@@ -80,17 +61,38 @@ async def get_meals_nutrient_sum_for_day_route(
 
 
 @router.get("/daily/macro", response_model=Dict[str, float])
-async def get_macro_for_day_route(
+async def get_macro_for_day(
     meal_service: MealServiceDep, user: UserDep, meal_date: date
 ) -> Dict[str, float]:
     return await meal_service.get_macro_for_day(user.id, meal_date=meal_date)
+
+
+@router.get("/{meal_id}/nutrients", response_model=float)
+async def get_meal_nutrient_sum(
+    meal_service: MealServiceDep,
+    user: UserDep,
+    meal_id: int,
+    nutrient_type: NutrientType,
+) -> float:
+    return await meal_service.get_meal_nutrient_sum(
+        user.id, meal_id=meal_id, nutrient_type=nutrient_type
+    )
+
+
+@router.get("/{meal_id}/macro", response_model=Dict[str, float])
+async def get_meal_macro(
+    meal_service: MealServiceDep, user: UserDep, meal_id: int
+) -> Dict[str, float]:
+    return await meal_service.get_meal_macro(user.id, meal_id=meal_id)
+
+
 
 
 # Meal Ingredients
 
 
 @router.post("/{meal_id}/ingredients", response_model=MealIngredientRead)
-async def add_ingredient_to_meal_route(
+async def add_ingredient_to_meal(
     meal_service: MealServiceDep,
     user: UserDep,
     meal_id: int,
@@ -103,14 +105,14 @@ async def add_ingredient_to_meal_route(
 
 
 @router.get("/{meal_id}/ingredients", response_model=List[MealIngredientRead])
-async def read_meal_ingredients_route(
+async def read_meal_ingredients(
     meal_service: MealServiceDep, user: UserDep, meal_id: int
 ) -> Sequence[MealIngredient]:
     return await meal_service.get_meal_ingredients(user.id, meal_id=meal_id)
 
 
 @router.get("/{meal_id}/ingredients/{ingredient_id}", response_model=MealIngredientRead)
-async def read_meal_ingredient_route(
+async def read_meal_ingredient(
     meal_service: MealServiceDep, user: UserDep, meal_id: int, ingredient_id: int
 ) -> MealIngredient:
     return await meal_service.get_meal_ingredient_by_id(
@@ -119,7 +121,7 @@ async def read_meal_ingredient_route(
 
 
 @router.put("/{meal_id}/ingredients/{ingredient_id}", response_model=MealIngredientRead)
-async def update_meal_ingredient_route(
+async def update_meal_ingredient(
     meal_service: MealServiceDep,
     user: UserDep,
     meal_id: int,
@@ -137,7 +139,7 @@ async def update_meal_ingredient_route(
 @router.delete(
     "/{meal_id}/ingredients/{ingredient_id}", response_model=MealIngredientRead
 )
-async def delete_meal_ingredient_route(
+async def delete_meal_ingredient(
     meal_service: MealServiceDep, user: UserDep, meal_id: int, ingredient_id: int
 ) -> MealIngredient:
     return await meal_service.delete_meal_ingredient(

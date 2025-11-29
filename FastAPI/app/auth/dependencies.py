@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy import select
 
 from app.auth.repositories import TokenRepository
 from app.auth.services import AuthService
@@ -25,13 +26,14 @@ def get_auth_service(db: DbSessionDep, redis: TokenRepositoryDep) -> AuthService
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
 
-async def get_current_user(auth_service: AuthServiceDep, token: TokenDep) -> User:
+async def get_current_user(db: DbSessionDep, token: TokenDep) -> User:
     payload = get_token_payload(token)
     username: str = payload.get("sub")
     user_id: int = payload.get("id")
     if username is None or user_id is None:
         raise UnauthorizedError("Token payload missing")
-    user = await auth_service.repo.get_by_id(user_id)
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
     if user is None:
         raise UnauthorizedError("User not found")
     return user

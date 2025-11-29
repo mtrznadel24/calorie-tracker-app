@@ -15,6 +15,7 @@ class MeasurementRepository(UserScopedRepository[Measurement]):
     async def get_latest_measurements(self, user_id: int) -> Measurement:
         result = await self.db.execute(
             select(Measurement)
+            .options(selectinload(Measurement.weight))
             .where(Measurement.user_id == user_id)
             .order_by(Measurement.date.desc())
         )
@@ -23,6 +24,7 @@ class MeasurementRepository(UserScopedRepository[Measurement]):
     async def get_previous_measurements(self, user_id: int) -> Measurement:
         result = await self.db.execute(
             select(Measurement)
+            .options(selectinload(Measurement.weight))
             .where(Measurement.user_id == user_id)
             .order_by(Measurement.date.desc())
             .offset(1)

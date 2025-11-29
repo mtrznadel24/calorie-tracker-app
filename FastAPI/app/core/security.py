@@ -2,21 +2,23 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
+import argon2
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 from app.core.exceptions import UnauthorizedError
 
-argon2_context = CryptContext(
-    schemes=["argon2"],
-    deprecated="auto",
-    argon2__type="id",
-    argon2__memory_cost=65536,
-    argon2__time_cost=3,
-    argon2__parallelism=4,
+argon2_context = PasswordHasher(
+    time_cost=3,
+    memory_cost=65536,
+    parallelism=4,
+    hash_len=32,
+    salt_len=16,
+    type=argon2.low_level.Type.ID
 )
 
 
@@ -29,7 +31,11 @@ def get_hashed_password(password: str) -> str:
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    return argon2_context.verify(password, hashed_password)
+    try:
+        argon2_context.verify(hashed_password, password)
+        return True
+    except (VerifyMismatchError, VerificationError, InvalidHashError):
+        return False
 
 
 def create_access_token(username: str, user_id: int) -> str:

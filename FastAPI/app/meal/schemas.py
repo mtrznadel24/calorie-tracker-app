@@ -7,7 +7,7 @@ from app.meal.models import MealType
 
 # Meal
 class MealCreate(BaseModel):
-    date: dt.date | None = None
+    date: dt.date
     type: MealType
 
 
