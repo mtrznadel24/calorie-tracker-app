@@ -111,3 +111,5 @@ async def client_no_user(session, user):
         yield client
 
     app.dependency_overrides.clear()
+
+

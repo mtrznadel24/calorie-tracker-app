@@ -47,7 +47,7 @@ class TestMealRepository:
             user.id, sample_meal.id, NutrientType.CALORIES
         )
         assert result is not None
-        assert result == 0.0
+        assert result == 0
 
     async def test_meal_nutrient_sum_one_ingredient(
         self, meal_repo, user, sample_meal_with_ingredient
@@ -56,7 +56,7 @@ class TestMealRepository:
             user.id, sample_meal_with_ingredient.id, NutrientType.CALORIES
         )
         assert result is not None
-        assert result == 44.5
+        assert result == round(44.5, 0)
 
     async def test_meal_nutrient_sum_with_many_ingredients(
         self, meal_repo, user, sample_meal, ingredient_factory
@@ -69,20 +69,20 @@ class TestMealRepository:
         result = await meal_repo.get_meal_nutrient_sum(
             user.id, sample_meal.id, NutrientType.CALORIES
         )
-        assert result == 44.5 + 157 + 260 + 31
+        assert result == round(44.5 + 157 + 260 + 31, 0)
 
     async def test_get_meal_macro_no_ingredients(self, meal_repo, user, sample_meal):
         result = await meal_repo.get_meal_macro(user.id, sample_meal.id)
-        assert result == {"calories": 0.0, "proteins": 0.0, "fats": 0.0, "carbs": 0.0}
+        assert result == {"calories": 0, "proteins": 0.0, "fats": 0.0, "carbs": 0.0}
 
     async def test_get_meal_macro_with_ingredient(
         self, meal_repo, user, sample_meal_with_ingredient
     ):
         result = await meal_repo.get_meal_macro(user.id, sample_meal_with_ingredient.id)
         assert result == {
-            "calories": 44.5,
-            "proteins": 0.55,
-            "fats": 0.15,
+            "calories": round(44.5, 0),
+            "proteins": 0.6,
+            "fats": round(0.15, 1),
             "carbs": 11.5,
         }
 
@@ -96,10 +96,10 @@ class TestMealRepository:
 
         result = await meal_repo.get_meal_macro(user.id, sample_meal.id)
         assert result == {
-            "calories": (50 * 89 + 100 * 157 + 200 * 130 + 20 * 155) / 100,
-            "proteins": (50 * 1.1 + 100 * 32 + 200 * 2.7 + 20 * 13) / 100,
-            "fats": (50 * 0.3 + 100 * 3.2 + 200 * 0.3 + 20 * 11) / 100,
-            "carbs": (50 * 23 + 100 * 0 + 200 * 28 + 20 * 1.1) / 100,
+            "calories": round((50 * 89 + 100 * 157 + 200 * 130 + 20 * 155) / 100, 0),
+            "proteins": round((50 * 1.1 + 100 * 32 + 200 * 2.7 + 20 * 13) / 100, 1),
+            "fats": round((50 * 0.3 + 100 * 3.2 + 200 * 0.3 + 20 * 11) / 100, 1),
+            "carbs": round((50 * 23 + 100 * 0 + 200 * 28 + 20 * 1.1) / 100, 1),
         }
 
     async def test_get_meals_nutrient_sum_for_day_no_meals(self, meal_repo, user):
@@ -121,7 +121,7 @@ class TestMealRepository:
         result = await meal_repo.get_meals_nutrient_sum_for_day(
             user.id, date(2022, 1, 1), NutrientType.CALORIES
         )
-        expected = (50 * 89 + 100 * 157 + 200 * 130 + 20 * 155) / 100
+        expected = round((50 * 89 + 100 * 157 + 200 * 130 + 20 * 155) / 100, 0)
         assert result == expected
 
     async def test_get_meals_nutrient_sum_for_day_many_meals(
@@ -132,10 +132,10 @@ class TestMealRepository:
         result = await meal_repo.get_meals_nutrient_sum_for_day(
             user.id, date(2022, 1, 1), NutrientType.CALORIES
         )
-        expected = (
+        expected = round((
             (50 * 89 + 100 * 157 + 200 * 130 + 20 * 155)
             + (100 * 89 + 200 * 157 + 400 * 130 + 40 * 155)
-        ) / 100
+        ) / 100, 0)
         assert result == expected
 
     async def test_get_macro_for_a_day_no_meals(self, meal_repo, user):
@@ -156,7 +156,7 @@ class TestMealRepository:
                     + (100 * 89 + 200 * 157 + 400 * 130 + 40 * 155)
                 )
                 / 100,
-                1,
+                0,
             ),
             "proteins": round(
                 (

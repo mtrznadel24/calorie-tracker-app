@@ -10,7 +10,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=Token, status_code=201)
-async def register_endpoint(
+async def register(
     auth_service: AuthServiceDep, response: Response, user_in: UserCreate
 ) -> Token:
     access_token, refresh_token = await auth_service.register_user(user_in)
@@ -25,8 +25,8 @@ async def register_endpoint(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.post("/token", response_model=Token, status_code=200)
-async def login_endpoint(
+@router.post("/login", response_model=Token, status_code=200)
+async def login(
     auth_service: AuthServiceDep,
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -44,7 +44,7 @@ async def login_endpoint(
 
 
 @router.post("/refresh", response_model=Token, status_code=200)
-async def refresh_endpoint(
+async def refresh(
     auth_service: AuthServiceDep, response: Response, refresh_token: str = Cookie(...)
 ) -> Token:
     try:
@@ -66,7 +66,7 @@ async def refresh_endpoint(
 
 
 @router.post("/logout", status_code=200)
-async def logout_endpoint(
+async def logout(
     auth_service: AuthServiceDep, response: Response, refresh_token: str = Cookie(...)
 ):
     response.delete_cookie(key="refresh_token")

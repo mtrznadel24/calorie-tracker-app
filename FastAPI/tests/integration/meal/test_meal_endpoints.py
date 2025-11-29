@@ -121,7 +121,7 @@ class TestMealEndpoints:
         assert response.status_code == 200
         value = response.json()
         assert isinstance(value, float)
-        assert value == 0.5*89 + 110 + 0.5*100
+        assert value == round(0.5*89 + 110 + 0.5*100, 0)
 
     async def test_get_meal_nutrient_sum_no_ingredient(self, client, sample_meal):
         response = await client.get(f"meals/{sample_meal.id}/nutrients", params={"nutrient_type": "calories"})
@@ -155,20 +155,20 @@ class TestMealEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, dict)
-        assert round(data["calories"], 1) == 204.5
-        assert round(data["proteins"], 1) == 22.0
-        assert round(data["fats"], 2) == 8.15
-        assert round(data["carbs"], 1) == 69.6
+        assert data["calories"] == round(204.5, 0)
+        assert data["proteins"] == round(22.0, 1)
+        assert data["fats"] == round(8.15, 1)
+        assert data["carbs"] == round(69.6, 1)
 
     async def test_get_meal_macro_no_ingredients(self, client, sample_meal):
         response = await client.get(f"meals/{sample_meal.id}/macro")
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, dict)
-        assert round(data["calories"], 1) == 0
-        assert round(data["proteins"], 1) == 0
-        assert round(data["fats"], 2) == 0
-        assert round(data["carbs"], 1) == 0
+        assert data["calories"] == 0, 1
+        assert data["proteins"] == 0
+        assert data["fats"] == 0
+        assert data["carbs"] == 0
 
     async def test_get_meal_macro_no_auth(self, client_no_user, sample_meal_with_ingredients):
         response = await client_no_user.get(f"/meals/{sample_meal_with_ingredients.id}/macro")
@@ -189,7 +189,7 @@ class TestMealEndpoints:
         assert response.status_code == 200
         value = response.json()
         assert isinstance(value, float)
-        assert value == 1477.5
+        assert value == round(1477.5, 0)
 
     async def test_get_meals_nutrient_sum_for_day_no_auth(self, client_no_user, meal_factory, ingredient_factory):
         await create_meals_with_ingredients(meal_factory, ingredient_factory)
@@ -220,7 +220,7 @@ class TestMealEndpoints:
         data = response.json()
         assert isinstance(data, dict)
         expected = {
-                    "calories": 1477.5,
+                    "calories": round(1477.5, 0),
                     "proteins": 121.7,
                     "fats": 17.7,
                     "carbs": 203.2
@@ -239,4 +239,6 @@ class TestMealEndpoints:
         data = response.json()
         assert isinstance(data, dict)
         assert data == {"calories": 0, "proteins": 0, "fats": 0, "carbs": 0}
+
+
 

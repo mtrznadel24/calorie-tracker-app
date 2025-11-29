@@ -44,7 +44,11 @@ class MealRepository(UserScopedRepository[Meal]):
             .where(Meal.user_id == user_id, Meal.id == meal_id)
         )
         result = await self.db.execute(stmt)
-        return result.scalar() or 0.0
+        value = result.scalar() or 0.0
+        if nutrient_type == NutrientType.CALORIES:
+            return round(value, 0)
+        else:
+            return round(value, 1)
 
     async def get_meal_macro(self, user_id: int, meal_id: int) -> dict[str, float]:
         stmt = (
@@ -68,7 +72,8 @@ class MealRepository(UserScopedRepository[Meal]):
         result = await self.db.execute(stmt)
         row = result.one_or_none()
         return {
-            field.value: getattr(row, field.value) or 0.0
+            field.value: round(getattr(row, field.value) or 0.0,
+                               0 if field == NutrientType.CALORIES else 1)
             for field in nutrient_type_list
         }
 
@@ -91,7 +96,12 @@ class MealRepository(UserScopedRepository[Meal]):
             .where(Meal.user_id == user_id, Meal.date == meal_date)
         )
         result = await self.db.execute(stmt)
-        return result.scalar() or 0.0
+        value = result.scalar() or 0.0
+        if nutrient_type == NutrientType.CALORIES:
+            return round(value, 0)
+        else:
+            return round(value, 1)
+
 
     async def get_macro_for_day(
         self, user_id: int, meal_date: date
@@ -117,7 +127,8 @@ class MealRepository(UserScopedRepository[Meal]):
         result = await self.db.execute(stmt)
         row = result.one_or_none()
         return {
-            field.value: round(getattr(row, field.value) or 0.0, 1)
+            field.value: round(getattr(row, field.value) or 0.0,
+                               0 if field == NutrientType.CALORIES else 1)
             for field in nutrient_type_list
         }
 

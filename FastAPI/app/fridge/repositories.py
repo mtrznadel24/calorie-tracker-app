@@ -126,7 +126,11 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
             .where(FridgeMeal.fridge_id == fridge_id, FridgeMeal.id == meal_id)
         )
         result = await self.db.execute(stmt)
-        return result.scalar() or 0.0
+        value = result.scalar() or 0.0
+        if nutrient_type == NutrientType.CALORIES:
+            return round(value, 0)
+        else:
+            return round(value, 1)
 
     async def get_fridge_meal_macro(
         self, fridge_id: int, meal_id: int
@@ -157,7 +161,9 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
         )
         result = await self.db.execute(stmt)
         row = result.one_or_none()
-        return {field.value: getattr(row, field.value) or 0.0 for field in fields}
+        return {field.value: round(getattr(row, field.value) or 0.0,
+                                   0 if field == NutrientType.CALORIES else 1)
+                                   for field in fields}
 
     async def add_meal_ingredient(self, ingredient: FridgeMealIngredient):
         self.db.add(ingredient)
