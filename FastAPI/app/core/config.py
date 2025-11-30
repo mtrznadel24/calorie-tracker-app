@@ -6,12 +6,12 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
-    SECRET_KEY: str
-    ALGORITHM: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
-    REFRESH_TOKEN_EXPIRE_DAYS: int
-    REDIS_URL: str
+    DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
+    SECRET_KEY: str = "default-key"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REDIS_URL: str = "redis://localhost:6379"
     DEBUG_LOGS: bool = False
     PROJECT_NAME: str = "FastAPI App"
 
