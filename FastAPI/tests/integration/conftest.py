@@ -14,10 +14,13 @@ from app.core.security import get_hashed_password
 from app.main import get_app
 from app.user.models import User
 
-BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
+BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env.test")
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+
+if not TEST_DATABASE_URL:
+    raise RuntimeError("TEST_DATABASE_URL is not set in .env.test")
 
 test_session_manager = DBSessionManager(
     TEST_DATABASE_URL,
