@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -38,15 +36,16 @@ class UserCreate(BaseModel):
         min_length=3,
         max_length=32,
         pattern=r"^[a-zA-Z0-9_.]+$",
-        description="Username must be 3-32 characters, only letters, numbers, underscores and dots",
+        description="Username must be 3-32 characters, only letters, numbers, "
+        "underscores and dots",
     )
     password: str = Field(min_length=8, max_length=64)
     confirm_password: str = Field(exclude=True, min_length=8, max_length=64)
     email: EmailStr
-    height: Optional[float] = Field(default=None, gt=0, lt=300)
-    age: Optional[int] = Field(default=None, gt=0, lt=120)
-    gender: Optional[Gender]
-    activity_level: Optional[float] = Field(default=None, ge=1, le=5)
+    height: float | None = Field(default=None, gt=0, lt=300)
+    age: int | None = Field(default=None, gt=0, lt=120)
+    gender: Gender | None
+    activity_level: float | None = Field(default=None, ge=1, le=5)
 
     @field_validator("password")
     @classmethod
@@ -63,10 +62,10 @@ class UserRead(BaseModel):
     id: int
     username: str
     email: str
-    height: Optional[float]
-    age: Optional[int]
-    gender: Optional[Gender]
-    activity_level: Optional[float]
+    height: float | None
+    age: int | None
+    gender: Gender | None
+    activity_level: float | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -76,7 +75,8 @@ class UserUpdate(BaseModel):
         min_length=3,
         max_length=32,
         pattern=r"^[a-zA-Z0-9_.]+$",
-        description="Username must be 3-32 characters, only letters, numbers, underscores and dots",
+        description="Username must be 3-32 characters, only letters, numbers, "
+        "underscores and dots",
     )
     height: float | None = Field(default=None, gt=0, lt=300)
     age: int | None = Field(default=None, gt=0, lt=120)

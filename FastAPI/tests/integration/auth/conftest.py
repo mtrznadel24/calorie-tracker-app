@@ -24,6 +24,7 @@ async def token_repo(fake_redis):
 async def auth_service(session, token_repo):
     return AuthService(session, token_repo)
 
+
 @pytest_asyncio.fixture
 async def client_with_redis(session, user, fake_redis):
     async def override_get_db():
@@ -36,10 +37,13 @@ async def client_with_redis(session, user, fake_redis):
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_redis_client] = override_get_redis_client
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
 
     app.dependency_overrides.clear()
+
 
 @pytest_asyncio.fixture
 def test_refresh_token():
@@ -47,6 +51,7 @@ def test_refresh_token():
     user_id = 1
     token, jti = create_refresh_token(username, user_id)
     return token
+
 
 @pytest_asyncio.fixture
 async def client_with_refresh_token(session, fake_redis, test_refresh_token):
@@ -68,7 +73,7 @@ async def client_with_refresh_token(session, fake_redis, test_refresh_token):
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://testserver",
-        cookies={"refresh_token": test_refresh_token}
+        cookies={"refresh_token": test_refresh_token},
     ) as client:
         yield client
 

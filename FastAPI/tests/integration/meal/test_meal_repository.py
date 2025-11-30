@@ -132,10 +132,14 @@ class TestMealRepository:
         result = await meal_repo.get_meals_nutrient_sum_for_day(
             user.id, date(2022, 1, 1), NutrientType.CALORIES
         )
-        expected = round((
-            (50 * 89 + 100 * 157 + 200 * 130 + 20 * 155)
-            + (100 * 89 + 200 * 157 + 400 * 130 + 40 * 155)
-        ) / 100, 0)
+        expected = round(
+            (
+                (50 * 89 + 100 * 157 + 200 * 130 + 20 * 155)
+                + (100 * 89 + 200 * 157 + 400 * 130 + 40 * 155)
+            )
+            / 100,
+            0,
+        )
         assert result == expected
 
     async def test_get_macro_for_a_day_no_meals(self, meal_repo, user):

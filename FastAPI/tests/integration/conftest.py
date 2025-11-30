@@ -3,21 +3,24 @@ import pathlib
 
 import pytest_asyncio
 from dotenv import load_dotenv
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models  # noqa: F401
 from app.auth.dependencies import get_current_user
-from app.core.db import Base, DBSessionManager, DbSessionDep, get_db
+from app.core.db import Base, DBSessionManager, get_db
 from app.core.security import get_hashed_password
-from app.user.models import User
 from app.main import get_app
+from app.user.models import User
 
-BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
+BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env.test")
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+
+if not TEST_DATABASE_URL:
+    raise RuntimeError("TEST_DATABASE_URL is not set in .env.test")
 
 test_session_manager = DBSessionManager(
     TEST_DATABASE_URL,
@@ -44,7 +47,6 @@ async def setup_db():
 @pytest_asyncio.fixture
 async def session():
     async with test_session_manager.connect() as conn:
-
         trans = await conn.begin()
 
         async_session = AsyncSession(bind=conn, expire_on_commit=False)
@@ -80,6 +82,7 @@ async def other_user(session):
     await session.refresh(u)
     return u
 
+
 @pytest_asyncio.fixture
 async def client(session, user):
     async def override_get_db():
@@ -92,7 +95,9 @@ async def client(session, user):
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user] = override_get_current_user
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
 
     app.dependency_overrides.clear()
@@ -103,13 +108,12 @@ async def client_no_user(session, user):
     async def override_get_db():
         yield session
 
-
     app = get_app()
     app.dependency_overrides[get_db] = override_get_db
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
 
     app.dependency_overrides.clear()
-
-

@@ -1,4 +1,4 @@
-from typing import Generic, Type, TypeVar
+from typing import TypeVar
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -10,8 +10,8 @@ from app.core.exceptions import ConflictError, NotFoundError
 T = TypeVar("T", bound=Base)
 
 
-class BaseRepository(Generic[T]):
-    def __init__(self, db: AsyncSession, model: Type[T]):
+class BaseRepository[T]:
+    def __init__(self, db: AsyncSession, model: type[T]):
         self.db = db
         self.model = model
 
@@ -57,7 +57,7 @@ class BaseRepository(Generic[T]):
             await self.db.commit()
         except IntegrityError:
             await self.db.rollback()
-            raise ConflictError(f"Could not delete {self.model.__name__}")
+            raise ConflictError(f"Could not delete {self.model.__name__}") from None
         except SQLAlchemyError:
             await self.db.rollback()
             raise
@@ -65,7 +65,7 @@ class BaseRepository(Generic[T]):
 
 
 class UserScopedRepository(BaseRepository[T]):
-    def __init__(self, db: AsyncSession, model: Type[T]):
+    def __init__(self, db: AsyncSession, model: type[T]):
         super().__init__(db, model)
         if not hasattr(model, "user_id"):
             raise ValueError(f"{model.__name__} does not have a user_id column")
@@ -78,7 +78,7 @@ class UserScopedRepository(BaseRepository[T]):
         )
         obj = result.scalar_one_or_none()
         if obj is None:
-            raise NotFoundError(f"{self.model.__name__} not found")
+            raise NotFoundError(f"{self.model.__name__} not found") from None
         return obj
 
     async def delete_by_id_for_user(self, user_id: int, object_id: int) -> T:
@@ -88,7 +88,7 @@ class UserScopedRepository(BaseRepository[T]):
             await self.db.commit()
         except IntegrityError:
             await self.db.rollback()
-            raise ConflictError(f"Could not delete {self.model.__name__}")
+            raise ConflictError(f"Could not delete {self.model.__name__}") from None
         except SQLAlchemyError:
             await self.db.rollback()
             raise

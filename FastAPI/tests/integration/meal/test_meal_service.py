@@ -15,7 +15,6 @@ from app.meal.schemas import (
 
 @pytest.mark.integration
 class TestMealCreate:
-
     async def test_crete_meal_success(self, meal_service, user):
         data = MealCreate(date=date(2022, 1, 1), type=MealType.BREAKFAST)
         result = await meal_service.create_meal(user.id, data)

@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from datetime import date
-from typing import Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -72,8 +72,10 @@ class MealRepository(UserScopedRepository[Meal]):
         result = await self.db.execute(stmt)
         row = result.one_or_none()
         return {
-            field.value: round(getattr(row, field.value) or 0.0,
-                               0 if field == NutrientType.CALORIES else 1)
+            field.value: round(
+                getattr(row, field.value) or 0.0,
+                0 if field == NutrientType.CALORIES else 1,
+            )
             for field in nutrient_type_list
         }
 
@@ -102,7 +104,6 @@ class MealRepository(UserScopedRepository[Meal]):
         else:
             return round(value, 1)
 
-
     async def get_macro_for_day(
         self, user_id: int, meal_date: date
     ) -> dict[str, float]:
@@ -127,8 +128,10 @@ class MealRepository(UserScopedRepository[Meal]):
         result = await self.db.execute(stmt)
         row = result.one_or_none()
         return {
-            field.value: round(getattr(row, field.value) or 0.0,
-                               0 if field == NutrientType.CALORIES else 1)
+            field.value: round(
+                getattr(row, field.value) or 0.0,
+                0 if field == NutrientType.CALORIES else 1,
+            )
             for field in nutrient_type_list
         }
 

@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -161,9 +161,13 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
         )
         result = await self.db.execute(stmt)
         row = result.one_or_none()
-        return {field.value: round(getattr(row, field.value) or 0.0,
-                                   0 if field == NutrientType.CALORIES else 1)
-                                   for field in fields}
+        return {
+            field.value: round(
+                getattr(row, field.value) or 0.0,
+                0 if field == NutrientType.CALORIES else 1,
+            )
+            for field in fields
+        }
 
     async def add_meal_ingredient(self, ingredient: FridgeMealIngredient):
         self.db.add(ingredient)
@@ -171,7 +175,7 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
             await self.db.commit()
         except IntegrityError:
             await self.db.rollback()
-            raise NotFoundError("Ingredient not found")
+            raise NotFoundError("Ingredient not found") from None
         except SQLAlchemyError:
             await self.db.rollback()
             raise

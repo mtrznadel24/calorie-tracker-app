@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from datetime import date
-from typing import Dict, List, Sequence
 
 from fastapi import APIRouter
 
@@ -60,10 +60,10 @@ async def get_meals_nutrient_sum_for_day(
     )
 
 
-@router.get("/daily/macro", response_model=Dict[str, float])
+@router.get("/daily/macro", response_model=dict[str, float])
 async def get_macro_for_day(
     meal_service: MealServiceDep, user: UserDep, meal_date: date
-) -> Dict[str, float]:
+) -> dict[str, float]:
     return await meal_service.get_macro_for_day(user.id, meal_date=meal_date)
 
 
@@ -79,13 +79,11 @@ async def get_meal_nutrient_sum(
     )
 
 
-@router.get("/{meal_id}/macro", response_model=Dict[str, float])
+@router.get("/{meal_id}/macro", response_model=dict[str, float])
 async def get_meal_macro(
     meal_service: MealServiceDep, user: UserDep, meal_id: int
-) -> Dict[str, float]:
+) -> dict[str, float]:
     return await meal_service.get_meal_macro(user.id, meal_id=meal_id)
-
-
 
 
 # Meal Ingredients
@@ -98,13 +96,12 @@ async def add_ingredient_to_meal(
     meal_id: int,
     meal_in: MealIngredientCreate,
 ) -> MealIngredient:
-
     return await meal_service.add_ingredient_to_meal(
         user.id, meal_id=meal_id, data=meal_in
     )
 
 
-@router.get("/{meal_id}/ingredients", response_model=List[MealIngredientRead])
+@router.get("/{meal_id}/ingredients", response_model=list[MealIngredientRead])
 async def read_meal_ingredients(
     meal_service: MealServiceDep, user: UserDep, meal_id: int
 ) -> Sequence[MealIngredient]:

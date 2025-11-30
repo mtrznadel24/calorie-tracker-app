@@ -9,7 +9,6 @@ from app.meal.repositories import MealRepository
 
 @pytest.mark.integration
 class TestUserScopeRepository:
-
     async def test_get_by_id_for_user(self, session, user):
         repo = MealRepository(session)
         meal = Meal(user_id=user.id, date=date(2022, 1, 1), type=MealType.BREAKFAST)

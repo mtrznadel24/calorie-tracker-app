@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,7 +40,9 @@ class MeasurementsService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError(f"Measurements with date:{data.date} already exists")
+            raise ConflictError(
+                f"Measurements with date:{data.date} already exists"
+            ) from None
         return await self.repo.refresh_and_return(measurements_in)
 
     async def get_measurements(self, user_id: int, measurement_id: int) -> Measurement:
@@ -74,11 +76,13 @@ class WeightService:
             weight = Weight(**data.model_dump(exclude_unset=True), user_id=user_id)
             self.repo.add(weight)
         else:
-            setattr(weight, "weight", data.weight)
+            weight.weight = data.weight
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError(f"Weight with date:{data.date} already exists")
+            raise ConflictError(
+                f"Weight with date:{data.date} already exists"
+            ) from None
         return await self.repo.refresh_and_return(weight)
 
     async def get_current_weight(self, user_id: int) -> Weight | None:

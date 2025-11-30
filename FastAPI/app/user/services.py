@@ -36,7 +36,7 @@ class UserService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("User already exists")
+            raise ConflictError("User already exists") from None
         return await self.repo.refresh_and_return(user_instance)
 
     async def update_user(self, user_id: int, data: UserUpdate) -> User:
@@ -48,7 +48,7 @@ class UserService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("User already exists")
+            raise ConflictError("User already exists") from None
         return await self.repo.refresh_and_return(user_instance)
 
     async def change_user_email(self, user_id: int, data: UserUpdateEmail) -> User:
@@ -57,7 +57,7 @@ class UserService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Email already registered")
+            raise ConflictError("Email already registered") from None
         return await self.repo.refresh_and_return(user)
 
     async def change_user_password(
@@ -70,7 +70,7 @@ class UserService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise UnauthorizedError("Password update failed")
+            raise UnauthorizedError("Password update failed") from None
         return await self.repo.refresh_and_return(user)
 
     async def get_user_bmr(self, user) -> int:
@@ -83,7 +83,7 @@ class UserService:
         try:
             return calculate_bmr(weight, user.height, user.age, user.gender)
         except ValueError:
-            raise ConflictError("No weight data")  # Conflict error ?
+            raise ConflictError("No weight data") from None
 
     async def get_user_tdee(self, user) -> int:
         if not user.activity_level:

@@ -3,14 +3,15 @@ import pytest
 
 @pytest.mark.integration
 class TestFridgeMealIngredientEndpoints:
-
-
     # --- POST fridge/meals/{meal_id}/ingredients ---
 
-    async def test_add_fridge_meal_ingredient_success(self, client_with_fridge, sample_fridge_meal, sample_fridge_product):
-        payload = {"weight": 80,
-                   "fridge_product_id": sample_fridge_product.id}
-        response = await client_with_fridge.post(f"/fridge/meals/{sample_fridge_meal.id}/ingredients", json=payload)
+    async def test_add_fridge_meal_ingredient_success(
+        self, client_with_fridge, sample_fridge_meal, sample_fridge_product
+    ):
+        payload = {"weight": 80, "fridge_product_id": sample_fridge_product.id}
+        response = await client_with_fridge.post(
+            f"/fridge/meals/{sample_fridge_meal.id}/ingredients", json=payload
+        )
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data["id"], int)
@@ -18,7 +19,7 @@ class TestFridgeMealIngredientEndpoints:
         assert data["fridge_product_id"] == sample_fridge_product.id
 
     async def test_add_fridge_meal_ingredient_no_auth(
-            self, client_no_user, sample_fridge_meal, sample_fridge_product
+        self, client_no_user, sample_fridge_meal, sample_fridge_product
     ):
         payload = {
             "weight": 80,
@@ -32,7 +33,7 @@ class TestFridgeMealIngredientEndpoints:
         assert response.status_code == 401
 
     async def test_add_fridge_meal_ingredient_wrong_meal(
-            self, client_with_fridge, sample_fridge_product
+        self, client_with_fridge, sample_fridge_product
     ):
         payload = {"weight": 50, "fridge_product_id": sample_fridge_product.id}
 
@@ -45,13 +46,11 @@ class TestFridgeMealIngredientEndpoints:
     # --- GET fridge/meals/{meal_id}/ingredients ---
 
     async def test_read_fridge_meal_ingredients_success(
-            self, client_with_fridge, sample_fridge_meal_with_ingredient
+        self, client_with_fridge, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
 
-        response = await client_with_fridge.get(
-            f"/fridge/meals/{meal.id}/ingredients"
-        )
+        response = await client_with_fridge.get(f"/fridge/meals/{meal.id}/ingredients")
 
         assert response.status_code == 200
         data = response.json()
@@ -59,27 +58,21 @@ class TestFridgeMealIngredientEndpoints:
         assert len(data) >= 1
 
     async def test_read_fridge_meal_ingredients_no_auth(
-            self, client_no_user, sample_fridge_meal_with_ingredient
+        self, client_no_user, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
 
-        response = await client_no_user.get(
-            f"/fridge/meals/{meal.id}/ingredients"
-        )
+        response = await client_no_user.get(f"/fridge/meals/{meal.id}/ingredients")
         assert response.status_code == 401
 
-    async def test_read_fridge_meal_ingredients_wrong_meal(
-            self, client_with_fridge
-    ):
-        response = await client_with_fridge.get(
-            "/fridge/meals/99999/ingredients"
-        )
+    async def test_read_fridge_meal_ingredients_wrong_meal(self, client_with_fridge):
+        response = await client_with_fridge.get("/fridge/meals/99999/ingredients")
         assert response.status_code == 404
 
     # --- GET fridge/meals/{meal_id}/ingredients/{ingredient_id} ---
 
     async def test_read_fridge_meal_ingredient_success(
-            self, client_with_fridge, sample_fridge_meal_with_ingredient
+        self, client_with_fridge, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
         ingredient = meal.ingredients[0]
@@ -93,7 +86,7 @@ class TestFridgeMealIngredientEndpoints:
         assert data["id"] == ingredient.id
 
     async def test_read_fridge_meal_ingredient_no_auth(
-            self, client_no_user, sample_fridge_meal_with_ingredient
+        self, client_no_user, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
         ingredient = meal.ingredients[0]
@@ -104,7 +97,7 @@ class TestFridgeMealIngredientEndpoints:
         assert response.status_code == 401
 
     async def test_read_fridge_meal_ingredient_wrong_id(
-            self, client_with_fridge, sample_fridge_meal_with_ingredient
+        self, client_with_fridge, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
 
@@ -116,7 +109,7 @@ class TestFridgeMealIngredientEndpoints:
     # --- PUT fridge/meals/{meal_id}/ingredients/{ingredient_id} ---
 
     async def test_update_fridge_meal_ingredient_success(
-            self, client_with_fridge, sample_fridge_meal_with_ingredient
+        self, client_with_fridge, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
         ingredient = meal.ingredients[0]
@@ -134,7 +127,7 @@ class TestFridgeMealIngredientEndpoints:
         assert data["weight"] == 90
 
     async def test_update_fridge_meal_ingredient_no_auth(
-            self, client_no_user, sample_fridge_meal_with_ingredient
+        self, client_no_user, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
         ingredient = meal.ingredients[0]
@@ -146,7 +139,7 @@ class TestFridgeMealIngredientEndpoints:
         assert response.status_code == 401
 
     async def test_update_fridge_meal_ingredient_wrong_data(
-            self, client_with_fridge, sample_fridge_meal_with_ingredient
+        self, client_with_fridge, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
         ingredient = meal.ingredients[0]
@@ -157,7 +150,7 @@ class TestFridgeMealIngredientEndpoints:
         assert response.status_code == 422
 
     async def test_update_fridge_meal_ingredient_wrong_id(
-            self, client_with_fridge, sample_fridge_meal_with_ingredient
+        self, client_with_fridge, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
 
@@ -170,7 +163,7 @@ class TestFridgeMealIngredientEndpoints:
     # --- DELETE fridge/meals/{meal_id}/ingredients/{ingredient_id} ---
 
     async def test_delete_fridge_meal_ingredient_success(
-            self, client_with_fridge, sample_fridge_meal_with_ingredient
+        self, client_with_fridge, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
         ingredient = meal.ingredients[0]
@@ -184,7 +177,7 @@ class TestFridgeMealIngredientEndpoints:
         assert data["id"] == ingredient.id
 
     async def test_delete_fridge_meal_ingredient_no_auth(
-            self, client_no_user, sample_fridge_meal_with_ingredient
+        self, client_no_user, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
         ingredient = meal.ingredients[0]
@@ -195,7 +188,7 @@ class TestFridgeMealIngredientEndpoints:
         assert response.status_code == 401
 
     async def test_delete_fridge_meal_ingredient_wrong_id(
-            self, client_with_fridge, sample_fridge_meal_with_ingredient
+        self, client_with_fridge, sample_fridge_meal_with_ingredient
     ):
         meal = sample_fridge_meal_with_ingredient
 

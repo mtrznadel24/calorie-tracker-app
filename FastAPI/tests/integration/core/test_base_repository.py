@@ -6,7 +6,6 @@ from app.user.repositories import UserRepository
 
 @pytest.mark.integration
 class TestBaseRepository:
-
     async def test_get_by_id_success(self, session, user):
         repo = UserRepository(session)
 

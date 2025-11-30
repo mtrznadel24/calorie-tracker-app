@@ -3,7 +3,6 @@ import pytest
 
 @pytest.mark.integration
 class TestAuthEndpoints:
-
     # --- POST /auth/register ---
 
     async def test_register_success(self, client_with_redis):
@@ -14,7 +13,7 @@ class TestAuthEndpoints:
             "email": "testuser24@example.com",
             "height": 180,
             "age": 32,
-            "gender": "male"
+            "gender": "male",
         }
         response = await client_with_redis.post("/auth/register", json=payload)
         assert response.status_code == 201
@@ -35,7 +34,7 @@ class TestAuthEndpoints:
             "email": "testuser24@example.com",
             "height": 180,
             "age": 32,
-            "gender": "male"
+            "gender": "male",
         }
         response = await client_with_redis.post("/auth/register", json=payload)
         assert response.status_code == 422
@@ -48,7 +47,7 @@ class TestAuthEndpoints:
             "email": "testuser24@example.com",
             "height": 180,
             "age": 32,
-            "gender": "male"
+            "gender": "male",
         }
         response = await client_with_redis.post("/auth/register", json=payload)
         assert response.status_code == 422
@@ -61,7 +60,7 @@ class TestAuthEndpoints:
             "email": "testuser24@example.com",
             "height": 180,
             "age": 32,
-            "gender": "male"
+            "gender": "male",
         }
         response = await client_with_redis.post("/auth/register", json=payload)
         assert response.status_code == 422
@@ -69,10 +68,7 @@ class TestAuthEndpoints:
     # --- POST /auth/login ---
 
     async def test_login_success(self, client_with_redis, user):
-        payload = {
-            "username": "test@example.com",
-            "password": "password1"
-        }
+        payload = {"username": "test@example.com", "password": "password1"}
         response = await client_with_redis.post("/auth/login", data=payload)
         assert response.status_code == 200
 
@@ -85,10 +81,7 @@ class TestAuthEndpoints:
         assert cookies["refresh_token"] is not None
 
     async def test_login_wrong_password(self, client_with_redis, user):
-        payload = {
-            "username": "test@example.com",
-            "password": "password11"
-        }
+        payload = {"username": "test@example.com", "password": "password11"}
         response = await client_with_redis.post("/auth/login", data=payload)
         assert response.status_code == 401
 

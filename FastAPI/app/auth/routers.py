@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -29,7 +31,7 @@ async def register(
 async def login(
     auth_service: AuthServiceDep,
     response: Response,
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
     access_token, refresh_token = await auth_service.login_user(form_data)
     response.set_cookie(
@@ -62,7 +64,7 @@ async def refresh(
         return Token(access_token=access_token, token_type="bearer")
     except UnauthorizedError:
         response.delete_cookie(key="refresh_token")
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        raise HTTPException(status_code=401, detail="Invalid refresh token") from None
 
 
 @router.post("/logout", status_code=200)

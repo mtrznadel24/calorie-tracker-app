@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from fastapi import APIRouter
 
@@ -24,6 +24,7 @@ async def add_measurements(
 ) -> Measurement:
     return await measurements_service.create_measurements(user.id, measurements_in)
 
+
 @measurements_router.get("/latest", response_model=MeasurementsRead | None)
 async def read_latest_measurements(
     measurements_service: MeasurementsServiceDep, user: UserDep
@@ -43,6 +44,7 @@ async def read_measurements(
     measurements_service: MeasurementsServiceDep, user: UserDep, measurements_id: int
 ) -> Measurement:
     return await measurements_service.get_measurements(user.id, measurements_id)
+
 
 @measurements_router.get("", response_model=list[MeasurementsRead])
 async def read_measurements_list(

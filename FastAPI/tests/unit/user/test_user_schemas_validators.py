@@ -1,17 +1,18 @@
 import pytest
 
-from app.core.exceptions import UnauthorizedError
-from app.user.schemas import validate_password_strength, validate_passwords_match, UserUpdateEmail
+from app.user.schemas import (
+    UserUpdateEmail,
+    validate_password_strength,
+    validate_passwords_match,
+)
 
 
 @pytest.mark.unit
 class TestSchemasValidators:
-
     def test_validate_passwords_strength(self):
         password = "HF&6VJF7fas98*8"
         result = validate_password_strength(password)
         assert result == password
-
 
     def test_validate_passwords_strength_too_weak(self):
         password = "12345678"
@@ -31,7 +32,6 @@ class TestSchemasValidators:
         with pytest.raises(ValueError):
             validate_passwords_match(password, confirm_password)
 
-
     def test_user_update_email_schema_success(self):
         data = UserUpdateEmail(
             new_email="testuser@example.com",
@@ -41,7 +41,7 @@ class TestSchemasValidators:
 
     def test_user_update_email_schema_not_match(self):
         with pytest.raises(ValueError):
-            data = UserUpdateEmail(
+            UserUpdateEmail(
                 new_email="testuser@example.com",
                 repeat_email="testuser2@example.com",
             )

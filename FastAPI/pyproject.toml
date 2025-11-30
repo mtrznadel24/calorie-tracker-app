@@ -37,6 +37,7 @@ black = "^25.9.0"
 isort = "^7.0.0"
 pre-commit = "^4.3.0"
 fakeredis = {extras = ["aioredis"], version = "^2.32.1"}
+aiosqlite = "^0.21.0"
 
 
 [tool.pytest.ini_options]
@@ -67,7 +68,30 @@ omit = [
 show_missing = true
 skip_covered = true
 
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+    "UP",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+

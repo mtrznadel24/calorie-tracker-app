@@ -1,10 +1,10 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import argon2
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
+from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -18,7 +18,7 @@ argon2_context = PasswordHasher(
     parallelism=4,
     hash_len=32,
     salt_len=16,
-    type=argon2.low_level.Type.ID
+    type=argon2.low_level.Type.ID,
 )
 
 
@@ -40,7 +40,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 def create_access_token(username: str, user_id: int) -> str:
     expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    expires = datetime.now(timezone.utc) + expires_delta
+    expires = datetime.now(UTC) + expires_delta
     payload = {"sub": username, "id": user_id, "exp": expires}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
@@ -48,7 +48,7 @@ def create_access_token(username: str, user_id: int) -> str:
 def create_refresh_token(username: str, user_id: int) -> tuple[str, str]:
     expires_delta = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     jti = str(uuid.uuid4())
-    expires = datetime.now(timezone.utc) + expires_delta
+    expires = datetime.now(UTC) + expires_delta
     payload = {"sub": username, "id": user_id, "exp": expires, "jti": jti}
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return token, jti
@@ -58,4 +58,4 @@ def get_token_payload(token: str) -> dict:
     try:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=settings.ALGORITHM)
     except JWTError:
-        raise UnauthorizedError("Invalid or expired token")
+        raise UnauthorizedError("Invalid or expired token") from None

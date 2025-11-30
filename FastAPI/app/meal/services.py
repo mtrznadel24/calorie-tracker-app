@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from datetime import date
-from typing import Sequence
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +24,7 @@ class MealService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Meal already exists")
+            raise ConflictError("Meal already exists") from None
         return meal
 
     async def get_meal(
@@ -73,7 +73,7 @@ class MealService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Ingredient already exists")
+            raise ConflictError("Ingredient already exists") from None
 
         return await self.ingredient_repo.refresh_and_return(ingredient)
 
@@ -102,7 +102,7 @@ class MealService:
         ingredient = await self.ingredient_repo.get_by_id(ingredient_id)
 
         if data.weight:
-            setattr(ingredient, "weight", data.weight)
+            ingredient.weight = data.weight
 
         if data.details:
             if not ingredient.details:
@@ -112,7 +112,7 @@ class MealService:
         try:
             await self.ingredient_repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Ingredient already exists")
+            raise ConflictError("Ingredient already exists") from None
 
         return await self.ingredient_repo.refresh_and_return(ingredient)
 
