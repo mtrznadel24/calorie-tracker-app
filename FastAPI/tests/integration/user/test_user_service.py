@@ -9,7 +9,6 @@ from app.user.schemas import UserCreate, UserUpdate, UserUpdateEmail, UserUpdate
 
 @pytest.mark.integration
 class TestUserService:
-
     async def test_create_user_success(self, user_service):
         data = UserCreate(
             username="testuser4",

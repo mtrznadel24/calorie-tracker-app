@@ -1,8 +1,15 @@
 from enum import Enum
 
-from sqlalchemy import Boolean, Column
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy import Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.core.db import Base

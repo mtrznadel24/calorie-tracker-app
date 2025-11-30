@@ -1,16 +1,17 @@
-import pytest
 import datetime as dt
+
+import pytest
+
 
 @pytest.mark.integration
 class TestMeasurementsEndpoints:
-
     async def test_add_measurements_success(self, client):
         payload = {
             "weight": {"weight": 80},
             "neck": 40.5,
             "biceps": 35,
             "chest": 110.0,
-            "thighs": 65
+            "thighs": 65,
         }
         response = await client.post("/measurements", json=payload)
         assert response.status_code == 200
@@ -31,7 +32,7 @@ class TestMeasurementsEndpoints:
             "neck": 40.5,
             "biceps": 35,
             "chest": 110.0,
-            "thighs": 65
+            "thighs": 65,
         }
         response = await client_no_user.post("/measurements", json=payload)
         assert response.status_code == 401
@@ -42,7 +43,7 @@ class TestMeasurementsEndpoints:
             "biceps": 35,
             "chest": 110.0,
             "thighs": 65,
-            "calves": 35
+            "calves": 35,
         }
         response = await client.post("/measurements", json=payload)
         assert response.status_code == 200
@@ -62,7 +63,7 @@ class TestMeasurementsEndpoints:
             "neck": 40.5,
             "biceps": 85,
             "chest": 110.0,
-            "thighs": 65
+            "thighs": 65,
         }
         response = await client.post("/measurements", json=payload)
         assert response.status_code == 422
@@ -84,7 +85,9 @@ class TestMeasurementsEndpoints:
         response = await client.get("/measurements/999")
         assert response.status_code == 404
 
-    async def test_read_measurement_other_users(self, client, sample_measurement_other_user):
+    async def test_read_measurement_other_users(
+        self, client, sample_measurement_other_user
+    ):
         response = await client.get(f"/measurements/{sample_measurement_other_user.id}")
         assert response.status_code == 404
 
@@ -102,7 +105,9 @@ class TestMeasurementsEndpoints:
         data = response.json()
         assert data["id"] == sample_measurements[-1].id
 
-    async def test_read_latest_measurement_no_auth(self, client_no_user, sample_measurements):
+    async def test_read_latest_measurement_no_auth(
+        self, client_no_user, sample_measurements
+    ):
         response = await client_no_user.get("/measurements/latest")
         assert response.status_code == 401
 
@@ -117,7 +122,9 @@ class TestMeasurementsEndpoints:
         data = response.json()
         assert data["id"] == sample_measurements[-2].id
 
-    async def test_read_previous_measurement_no_auth(self, client_no_user, sample_measurements):
+    async def test_read_previous_measurement_no_auth(
+        self, client_no_user, sample_measurements
+    ):
         response = await client_no_user.get("/measurements/previous")
         assert response.status_code == 401
 
@@ -135,7 +142,9 @@ class TestMeasurementsEndpoints:
         assert "id" in data[0]
         assert "neck" in data[0]
 
-    async def test_read_measurements_list_no_auth(self, client_no_user, sample_measurements):
+    async def test_read_measurements_list_no_auth(
+        self, client_no_user, sample_measurements
+    ):
         response = await client_no_user.get("/measurements")
         assert response.status_code == 401
 
@@ -158,11 +167,14 @@ class TestMeasurementsEndpoints:
         response = await client.delete("/measurements/999")
         assert response.status_code == 404
 
-    async def test_delete_measurement_other_users(self, client, sample_measurement_other_user):
-        response = await client.delete(f"/measurements/{sample_measurement_other_user.id}")
+    async def test_delete_measurement_other_users(
+        self, client, sample_measurement_other_user
+    ):
+        response = await client.delete(
+            f"/measurements/{sample_measurement_other_user.id}"
+        )
         assert response.status_code == 404
 
     async def test_delete_measurement_wrong_id(self, client):
         response = await client.delete("/measurements/asd")
         assert response.status_code == 422
-

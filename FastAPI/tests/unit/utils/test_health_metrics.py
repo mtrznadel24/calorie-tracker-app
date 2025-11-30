@@ -1,12 +1,11 @@
 import pytest
 
 from app.user.models import Gender
-from app.utils.health_metrics import calculate_bmr, calculate_tdee, calculate_bmi
+from app.utils.health_metrics import calculate_bmi, calculate_bmr, calculate_tdee
 
 
 @pytest.mark.unit
 class TestHealthMetrics:
-
     def test_calculate_bmr_male(self):
         result = calculate_bmr(80, 170, 25, Gender.MALE)
         assert result == 1742

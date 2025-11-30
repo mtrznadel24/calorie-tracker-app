@@ -9,7 +9,6 @@ from app.user.schemas import UserCreate
 
 @pytest.mark.integration
 class TestAuthService:
-
     async def test_authenticate_user_success(self, auth_service, user):
         result = await auth_service.authenticate_user("test@example.com", "password1")
 

@@ -40,8 +40,10 @@ app.include_router(auth_router)
 app.include_router(measurements_router)
 app.include_router(weights_router)
 
+
 def get_app():
     return app
+
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

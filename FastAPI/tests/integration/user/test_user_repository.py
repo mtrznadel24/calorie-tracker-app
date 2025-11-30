@@ -3,7 +3,6 @@ import pytest
 
 @pytest.mark.integration
 class TestUserRepository:
-
     async def test_get_user_by_email(self, user_repo, user):
         result = await user_repo.get_user_by_email(user.email)
 

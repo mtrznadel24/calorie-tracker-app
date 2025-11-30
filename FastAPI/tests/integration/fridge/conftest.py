@@ -39,6 +39,7 @@ async def fridge(session, user):
     await session.refresh(fridge)
     return fridge
 
+
 @pytest_asyncio.fixture
 async def client_with_fridge(session, user, fridge):
     async def override_get_db():
@@ -55,7 +56,9 @@ async def client_with_fridge(session, user, fridge):
     app.dependency_overrides[get_current_user] = override_get_current_user
     app.dependency_overrides[get_fridge] = override_get_fridge
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         yield client
 
     app.dependency_overrides.clear()

@@ -14,7 +14,6 @@ from app.fridge.schemas import (
 
 @pytest.mark.integration
 class TestFridgeService:
-
     async def test_create_fridge_product_success(self, fridge_service, fridge):
         data = FridgeProductCreate(
             product_name="Product1",

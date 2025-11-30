@@ -29,16 +29,18 @@ class MeasurementsCreate(BaseModel):
 
     @model_validator(mode="after")
     def check_at_least_one(cls, values):
-        if not any([
-            values.weight,
-            values.neck,
-            values.biceps,
-            values.chest,
-            values.waist,
-            values.hips,
-            values.thighs,
-            values.calves,
-        ]):
+        if not any(
+            [
+                values.weight,
+                values.neck,
+                values.biceps,
+                values.chest,
+                values.waist,
+                values.hips,
+                values.thighs,
+                values.calves,
+            ]
+        ):
             raise ValueError("At least one measurement or weight must be provided")
         return values
 

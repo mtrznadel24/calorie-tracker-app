@@ -5,7 +5,6 @@ from app.core.exceptions import NotFoundError
 
 @pytest.mark.integration
 class TestMealIngredientRepository:
-
     async def test_get_meal_ingredients(
         self, meal_ingredient_repo, user, sample_meal, ingredient_factory
     ):
@@ -40,7 +39,6 @@ class TestMealIngredientRepository:
     async def test_get_meal_ingredients_meal_no_ingredients(
         self, meal_ingredient_repo, user, sample_meal, ingredient_factory
     ):
-
         result = await meal_ingredient_repo.get_meal_ingredients(sample_meal.id)
 
         assert result == []

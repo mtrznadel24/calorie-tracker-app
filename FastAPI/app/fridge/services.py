@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,7 +38,7 @@ class FridgeService:
         try:
             await self.product_repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Product already exists")
+            raise ConflictError("Product already exists") from None
         return await self.product_repo.refresh_and_return(product)
 
     async def get_fridge_products(
@@ -49,7 +49,6 @@ class FridgeService:
         skip: int = 0,
         limit: int = 25,
     ) -> Sequence[FridgeProduct]:
-
         return await self.product_repo.get_fridge_product_list(
             fridge_id, is_favourite, category, skip, limit
         )
@@ -68,7 +67,7 @@ class FridgeService:
         try:
             await self.product_repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Product already exists")
+            raise ConflictError("Product already exists") from None
         return await self.product_repo.refresh_and_return(product)
 
     async def delete_fridge_product(
@@ -77,7 +76,7 @@ class FridgeService:
         try:
             return await self.product_repo.delete_fridge_product(fridge_id, product_id)
         except IntegrityError:
-            raise ConflictError("Could not delete fridge product")
+            raise ConflictError("Could not delete fridge product") from None
 
     # Fridge meals
 
@@ -89,7 +88,7 @@ class FridgeService:
         try:
             await self.meal_repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Meal already exists")
+            raise ConflictError("Meal already exists") from None
         return await self.meal_repo.refresh_and_return(meal)
 
     async def get_fridge_meals(
@@ -115,14 +114,14 @@ class FridgeService:
         try:
             await self.meal_repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Meal already exists")
+            raise ConflictError("Meal already exists") from None
         return await self.meal_repo.refresh_and_return(meal)
 
     async def delete_fridge_meal(self, fridge_id: int, meal_id: int) -> FridgeMeal:
         try:
             return await self.meal_repo.delete_fridge_meal(fridge_id, meal_id)
         except IntegrityError:
-            raise ConflictError("Could not delete fridge meal")
+            raise ConflictError("Could not delete fridge meal") from None
 
     async def get_fridge_meal_nutrient_sum(
         self, fridge_id: int, meal_id: int, nutrient_type: NutrientType
@@ -148,7 +147,7 @@ class FridgeService:
         try:
             return await self.meal_repo.add_meal_ingredient(ingredient)
         except IntegrityError:
-            raise ConflictError("Ingredient already exists")
+            raise ConflictError("Ingredient already exists") from None
 
     async def get_fridge_meal_ingredients(
         self, fridge_id: int, meal_id: int
@@ -180,7 +179,7 @@ class FridgeService:
         try:
             await self.meal_repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Meal ingredient already exists")
+            raise ConflictError("Meal ingredient already exists") from None
         return await self.meal_repo.refresh_and_return_ingredient(ingredient)
 
     async def delete_fridge_meal_ingredient(
@@ -192,4 +191,4 @@ class FridgeService:
                 fridge_id, meal_id, ingredient_id
             )
         except IntegrityError:
-            raise ConflictError("Could not delete ingredient")
+            raise ConflictError("Could not delete ingredient") from None

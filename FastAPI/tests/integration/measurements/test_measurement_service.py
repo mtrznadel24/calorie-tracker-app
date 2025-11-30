@@ -8,7 +8,6 @@ from app.measurements.schemas import MeasurementsCreate, WeightCreate
 
 @pytest.mark.integration
 class TestMeasurementService:
-
     async def test_create_measurements_no_weight(self, measurements_service, user):
         today = dt.date.today()
 

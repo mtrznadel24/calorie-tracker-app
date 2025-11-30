@@ -6,7 +6,6 @@ from app.utils.enums import NutrientType
 
 @pytest.mark.integration
 class TestFridgeMealRepository:
-
     async def test_get_fridge_meal_list_no_meals(self, fridge_meal_repo, fridge):
         result = await fridge_meal_repo.get_fridge_meal_list(fridge.id, False, 0, 10)
         assert result == []

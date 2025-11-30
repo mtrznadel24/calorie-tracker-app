@@ -5,7 +5,6 @@ from app.core.exceptions import NotFoundError
 
 @pytest.mark.integration
 class TestFridgeProductRepository:
-
     async def test_get_fridge_product_list_no_products(
         self, fridge_product_repo, fridge
     ):

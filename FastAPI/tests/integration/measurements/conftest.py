@@ -35,6 +35,7 @@ async def sample_weight(session, user):
     await session.refresh(weight)
     return weight
 
+
 @pytest_asyncio.fixture
 async def sample_weight_other_user(session, other_user):
     weight = Weight(user_id=other_user.id, date=date(2022, 1, 1), weight=80)
@@ -76,6 +77,7 @@ async def sample_measurement(session, user, sample_weight):
     await session.commit()
     await session.refresh(measurement)
     return measurement
+
 
 @pytest_asyncio.fixture
 async def sample_measurement_other_user(session, other_user, sample_weight):

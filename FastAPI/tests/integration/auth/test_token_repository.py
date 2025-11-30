@@ -9,7 +9,6 @@ from app.auth.repositories import TokenRepository
 
 @pytest.mark.integration
 class TestTokenRepository:
-
     async def test_is_refresh_token_valid_true(self):
         redis = AsyncMock()
         redis.exists.return_value = 1

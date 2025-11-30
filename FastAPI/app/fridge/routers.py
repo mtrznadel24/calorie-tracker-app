@@ -1,8 +1,8 @@
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
 
 from fastapi import APIRouter
 
-from app.fridge.dependencies import FridgeServiceDep, FridgeDep
+from app.fridge.dependencies import FridgeDep, FridgeServiceDep
 from app.fridge.models import (
     FoodCategory,
     FridgeMeal,
@@ -34,12 +34,12 @@ async def add_fridge_product(
     return await fridge_service.create_fridge_product(fridge.id, product_in)
 
 
-@router.get("/products", response_model=List[FridgeProductRead])
+@router.get("/products", response_model=list[FridgeProductRead])
 async def read_fridge_products(
     fridge_service: FridgeServiceDep,
     fridge: FridgeDep,
     is_favourite: bool = False,
-    category: Optional[FoodCategory] = None,
+    category: FoodCategory | None = None,
     skip: int = 0,
     limit: int = 25,
 ) -> Sequence[FridgeProduct]:
@@ -82,7 +82,7 @@ async def add_fridge_meal(
     return await fridge_service.create_fridge_meal(fridge.id, meal_in)
 
 
-@router.get("/meals", response_model=List[FridgeMealRead])
+@router.get("/meals", response_model=list[FridgeMealRead])
 async def read_fridge_meals(
     fridge_service: FridgeServiceDep,
     fridge: FridgeDep,
@@ -117,9 +117,7 @@ async def delete_fridge_meal(
     return await fridge_service.delete_fridge_meal(fridge.id, meal_id)
 
 
-@router.get(
-    "/meals/{meal_id}/nutrients/{nutrient_type}", response_model=float
-)
+@router.get("/meals/{meal_id}/nutrients/{nutrient_type}", response_model=float)
 async def read_fridge_meal_nutrient_sum(
     fridge_service: FridgeServiceDep,
     fridge: FridgeDep,
@@ -131,19 +129,17 @@ async def read_fridge_meal_nutrient_sum(
     )
 
 
-@router.get("/meals/{meal_id}/macros", response_model=Dict[str, float])
+@router.get("/meals/{meal_id}/macros", response_model=dict[str, float])
 async def read_fridge_meal_macro(
     fridge_service: FridgeServiceDep, fridge: FridgeDep, meal_id: int
-) -> Dict[str, float]:
+) -> dict[str, float]:
     return await fridge_service.get_fridge_meal_macro(fridge.id, meal_id)
 
 
 # Fridge meal ingredients
 
 
-@router.post(
-    "/meals/{meal_id}/ingredients", response_model=FridgeMealIngredientRead
-)
+@router.post("/meals/{meal_id}/ingredients", response_model=FridgeMealIngredientRead)
 async def add_fridge_meal_ingredient(
     fridge_service: FridgeServiceDep,
     fridge: FridgeDep,
@@ -157,7 +153,7 @@ async def add_fridge_meal_ingredient(
 
 @router.get(
     "/meals/{meal_id}/ingredients",
-    response_model=List[FridgeMealIngredientRead],
+    response_model=list[FridgeMealIngredientRead],
 )
 async def read_fridge_meal_ingredients(
     fridge_service: FridgeServiceDep, fridge: FridgeDep, meal_id: int
@@ -170,7 +166,10 @@ async def read_fridge_meal_ingredients(
     response_model=FridgeMealIngredientRead,
 )
 async def read_fridge_meal_ingredient(
-    fridge_service: FridgeServiceDep, fridge: FridgeDep, meal_id: int, ingredient_id: int
+    fridge_service: FridgeServiceDep,
+    fridge: FridgeDep,
+    meal_id: int,
+    ingredient_id: int,
 ) -> FridgeMealIngredient:
     return await fridge_service.get_fridge_meal_ingredient(
         fridge.id, meal_id, ingredient_id
@@ -198,7 +197,10 @@ async def update_fridge_meal_ingredient(
     response_model=FridgeMealIngredientRead,
 )
 async def delete_fridge_meal_ingredient(
-    fridge_service: FridgeServiceDep, fridge: FridgeDep, meal_id: int, ingredient_id: int
+    fridge_service: FridgeServiceDep,
+    fridge: FridgeDep,
+    meal_id: int,
+    ingredient_id: int,
 ) -> FridgeMealIngredient:
     return await fridge_service.delete_fridge_meal_ingredient(
         fridge.id, meal_id, ingredient_id
