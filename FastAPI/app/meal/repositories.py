@@ -158,3 +158,6 @@ class MealIngredientRepository(BaseRepository[MealIngredient]):
         if ingredient is None:
             raise NotFoundError("Meal ingredient not found")
         return ingredient
+
+    async def add_all_ingredients(self, ingredients):
+        self.db.add_all(ingredients)

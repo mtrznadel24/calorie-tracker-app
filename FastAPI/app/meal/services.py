@@ -5,9 +5,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError
+from app.fridge.repositories import FridgeProductRepository, FridgeMealRepository
 from app.meal.models import Meal, MealIngredient, MealIngredientDetails, MealType
 from app.meal.repositories import MealIngredientRepository, MealRepository
-from app.meal.schemas import MealCreate, MealIngredientCreate, MealIngredientUpdate
+from app.meal.schemas import MealCreate, MealIngredientCreate, MealIngredientUpdate, MealIngredientProductCreate
 from app.utils.enums import NutrientType
 
 # Meal
@@ -17,6 +18,8 @@ class MealService:
     def __init__(self, db: AsyncSession):
         self.repo = MealRepository(db)
         self.ingredient_repo = MealIngredientRepository(db)
+        self.fridge_product_repo = FridgeProductRepository(db)
+        self.fridge_meal_repo = FridgeMealRepository(db)
 
     async def create_meal(self, user_id: int, data: MealCreate) -> Meal:
         meal = Meal(**data.model_dump(exclude_unset=True), user_id=user_id)
@@ -24,13 +27,19 @@ class MealService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
-            raise ConflictError("Meal already exists") from None
-        return meal
+            return await self.get_meal(user_id, data.date, data.type)
+        return await self.repo.refresh_and_return(meal)
 
     async def get_meal(
         self, user_id: int, meal_date: date, meal_type: MealType
     ) -> Meal | None:
         return await self.repo.get_meal_by_date_and_type(user_id, meal_date, meal_type)
+
+    async def get_or_create_meal(self, user_id: int, meal_date: date, meal_type: MealType) -> Meal:
+        meal = await self.get_meal(user_id, meal_date, meal_type)
+        if not meal:
+            meal = await self.create_meal(user_id, MealCreate(date=meal_date, type=meal_type))
+        return meal
 
     async def get_meal_by_id(self, user_id: int, meal_id: int) -> Meal:
         return await self.repo.get_by_id_for_user(user_id, meal_id)
@@ -63,10 +72,10 @@ class MealService:
     # Meal ingredient
 
     async def add_ingredient_to_meal(
-        self, user_id: int, meal_id: int, data: MealIngredientCreate
+        self, user_id: int, meal_date: date, meal_type: MealType, data: MealIngredientCreate
     ) -> MealIngredient:
-        await self.repo.get_by_id_for_user(user_id, meal_id)
-        ingredient = MealIngredient(weight=data.weight, meal_id=meal_id)
+        meal = await self.get_or_create_meal(user_id, meal_date, meal_type)
+        ingredient = MealIngredient(weight=data.weight, meal_id=meal.id)
         ingredient.details = MealIngredientDetails(**data.details.model_dump())
         self.ingredient_repo.add(ingredient)
 
@@ -128,3 +137,63 @@ class MealService:
         await self.repo.get_by_id_for_user(user_id, meal_id)
         ingredient = await self.ingredient_repo.get_by_id(ingredient_id)
         return ingredient.details
+
+    async def add_fridge_product_to_meal(
+            self,
+            user_id: int,
+            fridge_id: int,
+            fridge_product_id: int,
+            meal_date: date,
+            meal_type: MealType,
+            weight: float
+    ) -> MealIngredient:
+        meal = await self.get_or_create_meal(user_id, meal_date, meal_type)
+        product = await self.fridge_product_repo.get_fridge_product(fridge_id, fridge_product_id)
+        meal_ingredient = MealIngredient(weight=weight,
+                                         meal_id=meal.id)
+        meal_ingredient.details = MealIngredientDetails(product_name=product.product_name,
+                                              calories_100g=product.calories_100g,
+                                              proteins_100g=product.proteins_100g,
+                                              fats_100g=product.fats_100g,
+                                              carbs_100g=product.carbs_100g)
+
+        self.ingredient_repo.add(meal_ingredient)
+        try:
+            await self.repo.commit_or_conflict()
+        except IntegrityError:
+            raise ConflictError("Ingredient already exists") from None
+        return await self.ingredient_repo.refresh_and_return(meal_ingredient)
+
+
+    async def add_fridge_meal_to_meal(
+            self,
+            user_id: int,
+            fridge_id: int,
+            fridge_meal_id: int,
+            meal_date: date,
+            meal_type: MealType,
+            weight: float
+    ) -> Sequence[MealIngredient]:
+        await self.get_or_create_meal(user_id, meal_date, meal_type)
+        meal_ingredients = await self.fridge_meal_repo.get_fridge_meal_ingredients(fridge_id, fridge_meal_id)
+        meal_weight = await self.fridge_meal_repo.get_fridge_meal_weight(fridge_id, fridge_meal_id)
+        k = weight / meal_weight
+        products = [
+            MealIngredientCreate(
+                weight=int(ing.weight * k),
+                details=MealIngredientProductCreate(
+                    product_name=ing.fridge_product.product_name,
+                    calories_100g=ing.fridge_product.calories_100g,
+                    proteins_100g=ing.fridge_product.proteins_100g,
+                    fats_100g=ing.fridge_product.fats_100g,
+                    carbs_100g=ing.fridge_product.carbs_100g,
+                )
+            )
+            for ing in meal_ingredients
+        ]
+        await self.ingredient_repo.add_all_ingredients(products)
+        try:
+            await self.repo.commit_or_conflict()
+        except IntegrityError:
+            raise ConflictError("Ingredient already exists") from None
+        return await self.ingredient_repo.refresh_and_return(meal_ingredients)
