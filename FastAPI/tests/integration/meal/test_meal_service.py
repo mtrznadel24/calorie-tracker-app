@@ -2,7 +2,8 @@ from datetime import date
 
 import pytest
 
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import NotFoundError
+from app.fridge.models import FoodCategory
 from app.meal.models import MealIngredient, MealType
 from app.meal.schemas import (
     MealCreate,
@@ -10,24 +11,46 @@ from app.meal.schemas import (
     MealIngredientProductCreate,
     MealIngredientProductUpdate,
     MealIngredientUpdate,
+    WeightRequest,
 )
 
 
 @pytest.mark.integration
 class TestMealCreate:
-    async def test_crete_meal_success(self, meal_service, user):
+    async def test_create_meal_success(self, meal_service, user):
         data = MealCreate(date=date(2022, 1, 1), type=MealType.BREAKFAST)
         result = await meal_service.create_meal(user.id, data)
         assert result.user_id == user.id
         assert result.date == date(2022, 1, 1)
         assert result.type == MealType.BREAKFAST
 
-    async def test_create_meal_failure(self, meal_service, user, sample_meal):
+    async def test_create_meal_already_exists(self, meal_service, user, sample_meal):
         data = MealCreate(date=date(2022, 1, 1), type=MealType.BREAKFAST)
-        with pytest.raises(ConflictError):
-            await meal_service.create_meal(user.id, data)
+        result = await meal_service.create_meal(user.id, data)
+        assert result.user_id == user.id
+        assert result.date == date(2022, 1, 1)
+        assert result.type == MealType.BREAKFAST
 
-    async def test_add_ingredient_to_meal_success(
+    async def test_get_or_create_meal_meal_exists(
+        self, meal_service, user, sample_meal
+    ):
+        result = await meal_service.get_or_create_meal(
+            user.id, sample_meal.date, sample_meal.type
+        )
+        assert result.user_id == user.id
+        assert result.id == sample_meal.id
+        assert result.date == sample_meal.date
+        assert result.type == sample_meal.type
+
+    async def test_get_or_create_meal_meal_not_exists(self, meal_service, user):
+        result = await meal_service.get_or_create_meal(
+            user.id, date(2022, 1, 1), MealType.BREAKFAST
+        )
+        assert result.user_id == user.id
+        assert result.date == date(2022, 1, 1)
+        assert result.type == MealType.BREAKFAST
+
+    async def test_add_ingredient_to_meal_success_meal_exists(
         self, meal_service, user, sample_meal
     ):
         data_details = MealIngredientProductCreate(
@@ -40,7 +63,30 @@ class TestMealCreate:
         data = MealIngredientCreate(weight=50, details=data_details)
 
         result = await meal_service.add_ingredient_to_meal(
-            user.id, sample_meal.id, data
+            user.id, sample_meal.date, sample_meal.type, data
+        )
+        details = result.details
+
+        assert result.weight == 50
+        assert details.calories_100g == 100
+        assert details.proteins_100g == 20
+        assert details.fats_100g == 5
+        assert details.carbs_100g == 15
+
+    async def test_add_ingredient_to_meal_success_meal_not_exists(
+        self, meal_service, user
+    ):
+        data_details = MealIngredientProductCreate(
+            product_name="product1",
+            calories_100g=100,
+            proteins_100g=20,
+            fats_100g=5,
+            carbs_100g=15,
+        )
+        data = MealIngredientCreate(weight=50, details=data_details)
+
+        result = await meal_service.add_ingredient_to_meal(
+            user.id, date(2022, 1, 1), MealType.BREAKFAST, data
         )
         details = result.details
 
@@ -234,3 +280,84 @@ class TestMealCreate:
             user.id, sample_meal.id, ingredient.id
         )
         assert result is None
+
+    async def test_add_fridge_product_to_meal_success(
+        self, meal_service, user, fridge, fridge_product_factory
+    ):
+        product = await fridge_product_factory(
+            product_name="Product1",
+            calories_100g=150,
+            proteins_100g=25,
+            fats_100g=10,
+            carbs_100g=40,
+            category=FoodCategory.FRUIT,
+            is_favourite=False,
+        )
+        weight = WeightRequest(weight=50)
+        result = await meal_service.add_fridge_product_to_meal(
+            user.id,
+            fridge.id,
+            product.id,
+            date(2022, 1, 1),
+            MealType.BREAKFAST,
+            weight=weight,
+        )
+        assert result.weight == weight.weight
+
+        details = result.details
+        assert details.product_name == product.product_name
+        assert details.calories_100g == product.calories_100g
+
+        meal = await meal_service.get_meal(
+            user.id, date(2022, 1, 1), MealType.BREAKFAST
+        )
+        assert result.meal_id == meal.id
+
+    async def test_add_fridge_meal_to_meal_success(
+        self,
+        meal_service,
+        user,
+        fridge,
+        fridge_product_factory,
+        fridge_meal_factory,
+        fridge_meal_ingredient_factory,
+    ):
+        weight = WeightRequest(weight=50)
+        fridge_meal = await fridge_meal_factory(meal_name="Meal1")
+        fridge_products = [
+            await fridge_product_factory(
+                product_name=name,
+                calories_100g=150,
+                proteins_100g=25,
+                fats_100g=10,
+                carbs_100g=40,
+                category=FoodCategory.FRUIT,
+                is_favourite=False,
+            )
+            for name in ["Product1", "Product2", "Product3"]
+        ]
+        [
+            await fridge_meal_ingredient_factory(fridge_meal, weight.weight, prod)
+            for prod in fridge_products
+        ]
+
+        result = await meal_service.add_fridge_meal_to_meal(
+            user.id,
+            fridge.id,
+            fridge_meal.id,
+            date(2022, 1, 1),
+            MealType.BREAKFAST,
+            weight=weight,
+        )
+        assert len(result) == 3
+        assert set([ing.details.product_name for ing in result]) == {
+            "Product1",
+            "Product2",
+            "Product3",
+        }
+        ingredient = result[0]
+        assert ingredient.weight == 17
+        meal = await meal_service.get_meal(
+            user.id, date(2022, 1, 1), MealType.BREAKFAST
+        )
+        assert ingredient.meal_id == meal.id

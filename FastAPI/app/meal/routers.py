@@ -4,6 +4,7 @@ from datetime import date
 from fastapi import APIRouter
 
 from app.auth.dependencies import UserDep
+from app.fridge.dependencies import FridgeDep
 from app.meal.dependencies import MealServiceDep
 from app.meal.models import Meal, MealIngredient, MealType
 from app.meal.schemas import (
@@ -12,6 +13,7 @@ from app.meal.schemas import (
     MealIngredientRead,
     MealIngredientUpdate,
     MealRead,
+    WeightRequest,
 )
 from app.utils.enums import NutrientType
 
@@ -89,15 +91,16 @@ async def get_meal_macro(
 # Meal Ingredients
 
 
-@router.post("/{meal_id}/ingredients", response_model=MealIngredientRead)
+@router.post("/{meal_date}/{meal_type}/ingredients", response_model=MealIngredientRead)
 async def add_ingredient_to_meal(
     meal_service: MealServiceDep,
     user: UserDep,
-    meal_id: int,
+    meal_date: date,
+    meal_type: MealType,
     meal_in: MealIngredientCreate,
 ) -> MealIngredient:
     return await meal_service.add_ingredient_to_meal(
-        user.id, meal_id=meal_id, data=meal_in
+        user.id, meal_date, meal_type, data=meal_in
     )
 
 
@@ -141,4 +144,40 @@ async def delete_meal_ingredient(
 ) -> MealIngredient:
     return await meal_service.delete_meal_ingredient(
         user.id, meal_id=meal_id, ingredient_id=ingredient_id
+    )
+
+
+@router.post(
+    "/{meal_date}/{meal_type}/ingredients/from-fridge-product/{fridge_product_id}",
+    response_model=MealIngredientRead,
+)
+async def add_fridge_product_to_meal(
+    meal_service: MealServiceDep,
+    user: UserDep,
+    fridge: FridgeDep,
+    fridge_product_id: int,
+    meal_date: date,
+    meal_type: MealType,
+    weight: WeightRequest,
+):
+    return await meal_service.add_fridge_product_to_meal(
+        user.id, fridge.id, fridge_product_id, meal_date, meal_type, weight
+    )
+
+
+@router.post(
+    "/{meal_date}/{meal_type}/ingredients/from-fridge-meal/{fridge_meal_id}",
+    response_model=list[MealIngredientRead],
+)
+async def add_fridge_meal_to_meal(
+    meal_service: MealServiceDep,
+    user: UserDep,
+    fridge: FridgeDep,
+    fridge_meal_id: int,
+    meal_date: date,
+    meal_type: MealType,
+    weight: WeightRequest,
+):
+    return await meal_service.add_fridge_meal_to_meal(
+        user.id, fridge.id, fridge_meal_id, meal_date, meal_type, weight
     )
