@@ -11,6 +11,14 @@ from app import models  # noqa: F401
 from app.auth.dependencies import get_current_user
 from app.core.db import Base, DBSessionManager, get_db
 from app.core.security import get_hashed_password
+from app.fridge.dependencies import get_fridge
+from app.fridge.models import (
+    FoodCategory,
+    Fridge,
+    FridgeMeal,
+    FridgeMealIngredient,
+    FridgeProduct,
+)
 from app.main import get_app
 from app.user.models import User
 
@@ -117,3 +125,92 @@ async def client_no_user(session, user):
         yield client
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def fridge(session, user):
+    fridge = Fridge(user_id=user.id)
+    session.add(fridge)
+    await session.commit()
+    await session.refresh(fridge)
+    return fridge
+
+
+@pytest_asyncio.fixture
+async def client_with_fridge(session, user, fridge):
+    async def override_get_db():
+        yield session
+
+    async def override_get_current_user():
+        return user
+
+    async def override_get_fridge():
+        return fridge
+
+    app = get_app()
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_fridge] = override_get_fridge
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+def fridge_product_factory(session, fridge):
+    async def factory(
+        product_name,
+        calories_100g,
+        proteins_100g,
+        fats_100g,
+        carbs_100g,
+        category: FoodCategory,
+        is_favourite: bool,
+    ):
+        product = FridgeProduct(
+            fridge_id=fridge.id,
+            product_name=product_name,
+            calories_100g=calories_100g,
+            proteins_100g=proteins_100g,
+            fats_100g=fats_100g,
+            carbs_100g=carbs_100g,
+            category=category,
+            is_favourite=is_favourite,
+        )
+        session.add(product)
+        await session.commit()
+        await session.refresh(product)
+        return product
+
+    return factory
+
+
+@pytest_asyncio.fixture
+def fridge_meal_factory(session, fridge):
+    async def factory(meal_name):
+        meal = FridgeMeal(fridge_id=fridge.id, name=meal_name, is_favourite=False)
+
+        session.add(meal)
+        await session.commit()
+        await session.refresh(meal)
+        return meal
+
+    return factory
+
+
+@pytest_asyncio.fixture
+def fridge_meal_ingredient_factory(session, fridge):
+    async def factory(meal, weight, product):
+        ingredient = FridgeMealIngredient(
+            fridge_meal_id=meal.id, weight=weight, fridge_product_id=product.id
+        )
+        session.add(ingredient)
+        await session.commit()
+        await session.refresh(ingredient)
+        return ingredient
+
+    return factory

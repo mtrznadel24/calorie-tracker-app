@@ -69,3 +69,10 @@ class MealIngredientRead(BaseModel):
 class MealIngredientUpdate(BaseModel):
     weight: float | None = None
     details: MealIngredientProductUpdate | None = None
+
+
+# Others
+
+
+class WeightRequest(BaseModel):
+    weight: float = Field(gt=0)

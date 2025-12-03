@@ -24,6 +24,9 @@ class BaseRepository[T]:
     async def flush(self) -> None:
         await self.db.flush()
 
+    async def refresh(self, instance: T):
+        await self.db.refresh(instance)
+
     async def refresh_and_return(self, instance: T) -> T:
         await self.db.refresh(instance)
         return instance

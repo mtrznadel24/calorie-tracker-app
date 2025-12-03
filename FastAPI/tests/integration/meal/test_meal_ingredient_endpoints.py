@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 
@@ -17,8 +19,10 @@ class TestMealIngredientEndpoints:
             },
         }
         response = await client.post(
-            f"/meals/{sample_meal.id}/ingredients", json=payload
+            f"/meals/{sample_meal.date}/{sample_meal.type.value}/ingredients",
+            json=payload,
         )
+        print(response.json())
         assert response.status_code == 200
         data = response.json()
         details = data["details"]
@@ -42,7 +46,8 @@ class TestMealIngredientEndpoints:
             },
         }
         response = await client_no_user.post(
-            f"/meals/{sample_meal.id}/ingredients", json=payload
+            f"/meals/{sample_meal.date}/{sample_meal.type.value}/ingredients",
+            json=payload,
         )
         assert response.status_code == 401
 
@@ -57,8 +62,20 @@ class TestMealIngredientEndpoints:
                 "carbs_100g": 60,
             },
         }
-        response = await client.post("/meals/9999/ingredients", json=payload)
-        assert response.status_code == 404
+        response = await client.post(
+            f"/meals/{date(2023, 2, 2)}/{sample_meal.type.value}/ingredients",
+            json=payload,
+        )
+        assert response.status_code == 200
+        data = response.json()
+        details = data["details"]
+        assert isinstance(data["id"], int)
+        assert data["weight"] == 50
+        assert details["product_name"] == "product1"
+        assert details["calories_100g"] == 160
+        assert details["proteins_100g"] == 40
+        assert details["fats_100g"] == 20
+        assert details["carbs_100g"] == 60
 
     async def test_add_ingredient_to_meal_wrong_data(self, client, sample_meal):
         payload = {
@@ -72,7 +89,8 @@ class TestMealIngredientEndpoints:
             },
         }
         response = await client.post(
-            f"/meals/{sample_meal.id}/ingredients", json=payload
+            f"/meals/{sample_meal.date}/{sample_meal.type.value}/ingredients",
+            json=payload,
         )
         assert response.status_code == 422
 

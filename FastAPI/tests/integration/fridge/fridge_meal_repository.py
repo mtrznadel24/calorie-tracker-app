@@ -118,6 +118,22 @@ class TestFridgeMealRepository:
             "carbs": 30.0,
         }
 
+    async def test_get_fridge_meal_weight_success(
+        self, fridge_meal_repo, fridge, sample_fridge_meal_with_ingredients
+    ):
+        result = await fridge_meal_repo.get_fridge_meal_weight(
+            fridge.id, sample_fridge_meal_with_ingredients.id
+        )
+        assert result == 150
+
+    async def test_get_fridge_meal_weight_no_ingredients(
+        self, fridge_meal_repo, fridge, sample_fridge_meal
+    ):
+        result = await fridge_meal_repo.get_fridge_meal_weight(
+            fridge.id, sample_fridge_meal.id
+        )
+        assert result == 0.0
+
     async def test_add_meal_ingredient(
         self,
         fridge_meal_repo,

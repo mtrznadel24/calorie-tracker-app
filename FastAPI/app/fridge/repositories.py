@@ -169,7 +169,9 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
             for field in fields
         }
 
-    async def get_fridge_meal_weight(self, fridge_id: int, fridge_meal_id: int) -> float:
+    async def get_fridge_meal_weight(
+        self, fridge_id: int, fridge_meal_id: int
+    ) -> float:
         stmt = (
             select(func.sum(FridgeMealIngredient.weight))
             .join(FridgeMeal)
