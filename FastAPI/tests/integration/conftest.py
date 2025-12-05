@@ -38,9 +38,11 @@ test_session_manager = DBSessionManager(
     echo=False,
 )
 
+
 @pytest.fixture(autouse=True, scope="session")
 def configure_logs():
     logging.basicConfig(level=logging.CRITICAL)
+
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_db():

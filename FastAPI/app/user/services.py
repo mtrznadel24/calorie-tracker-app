@@ -1,4 +1,5 @@
 import logging
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +11,6 @@ from app.user.models import User
 from app.user.repositories import UserRepository
 from app.user.schemas import UserCreate, UserUpdate, UserUpdateEmail, UserUpdatePassword
 from app.utils.health_metrics import calculate_bmi, calculate_bmr, calculate_tdee
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,9 @@ class UserService:
             logger.warning("Attempt to register with existing email=%s", data.email)
             raise ConflictError("Email already registered")
         if await self.repo.get_user_by_username(data.username):
-            logger.warning("Attempt to register with existing username=%s", data.username)
+            logger.warning(
+                "Attempt to register with existing username=%s", data.username
+            )
             raise ConflictError("Username already registered")
         user_instance = User(
             **data.model_dump(exclude={"password", "confirm_password"}),
@@ -42,7 +44,11 @@ class UserService:
         self.repo.add(fridge_instance)
         try:
             await self.repo.commit_or_conflict()
-            logger.info("User created successfully id=%s email=%s", user_instance.id, user_instance.email)
+            logger.info(
+                "User created successfully id=%s email=%s",
+                user_instance.id,
+                user_instance.email,
+            )
         except IntegrityError:
             raise ConflictError("User already exists") from None
         return await self.repo.refresh_and_return(user_instance)
@@ -65,9 +71,13 @@ class UserService:
         user.email = data.new_email
         try:
             await self.repo.commit_or_conflict()
-            logger.info("User email updated id=%s new_email=%s", user_id, data.new_email)
+            logger.info(
+                "User email updated id=%s new_email=%s", user_id, data.new_email
+            )
         except IntegrityError:
-            logger.warning("Attempt to change email to already registered value=%s", data.new_email)
+            logger.warning(
+                "Attempt to change email to already registered value=%s", data.new_email
+            )
             raise ConflictError("Email already registered") from None
         return await self.repo.refresh_and_return(user)
 
@@ -76,7 +86,10 @@ class UserService:
     ) -> User:
         user = await self.repo.get_by_id(user_id)
         if not verify_password(data.old_password, user.hashed_password):
-            logger.warning("Failed password change attempt: wrong old password for user_id=%s", user_id)
+            logger.warning(
+                "Failed password change attempt: wrong old password for user_id=%s",
+                user_id,
+            )
             raise UnauthorizedError("Old password is incorrect")
         user.hashed_password = get_hashed_password(data.new_password)
         await self.repo.commit_or_conflict()

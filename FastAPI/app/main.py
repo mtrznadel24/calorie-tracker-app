@@ -29,6 +29,7 @@ async def lifespan(app: FastAPI):
         await close_redis_session()
         logger.info("Application lifespan finished")
 
+
 app = FastAPI(lifespan=lifespan, title=settings.PROJECT_NAME, docs_url="/docs")
 register_exception_handlers(app)
 

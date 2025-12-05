@@ -12,6 +12,7 @@ if env == "dev":
 else:
     env_file = BASE_DIR / f".env.{env}"
 
+
 class Settings(BaseSettings):
     ENVIRONMENT: str = "dev"
     DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
@@ -26,7 +27,7 @@ class Settings(BaseSettings):
     model_config = {
         "env_file": str(env_file),
         "env_file_encoding": "utf-8",
-        "extra": "ignore"
+        "extra": "ignore",
     }
 
 

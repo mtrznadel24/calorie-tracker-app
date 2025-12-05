@@ -11,6 +11,7 @@ from app.measurements.schemas import MeasurementsCreate, WeightCreate
 
 logger = logging.getLogger(__name__)
 
+
 class MeasurementsService:
     def __init__(self, db: AsyncSession):
         self.repo = MeasurementRepository(db)
@@ -44,7 +45,8 @@ class MeasurementsService:
         except IntegrityError:
             logger.warning(
                 "Attempt to create duplicate measurements for user_id=%s date=%s",
-                           user_id, data.date
+                user_id,
+                data.date,
             )
             raise ConflictError(
                 f"Measurements with date:{data.date} already exists"

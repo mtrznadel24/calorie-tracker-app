@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 
 from sqlalchemy.exc import IntegrityError
@@ -21,9 +22,8 @@ from app.fridge.schemas import (
 )
 from app.utils.enums import NutrientType
 
-import logging
-
 logger = logging.getLogger(__name__)
+
 
 # Fridge products
 class FridgeService:
@@ -42,7 +42,8 @@ class FridgeService:
             await self.product_repo.commit_or_conflict()
         except IntegrityError:
             logger.warning(
-                f"Duplicate product attempt: name='{data.product_name}', fridge_id={fridge_id}"
+                f"Duplicate product attempt: "
+                f"name='{data.product_name}', fridge_id={fridge_id}"
             )
             raise ConflictError("Product already exists") from None
         return await self.product_repo.refresh_and_return(product)
@@ -189,6 +190,4 @@ class FridgeService:
         self, fridge_id: int, meal_id: int, ingredient_id: int
     ) -> FridgeMealIngredient:
         await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
-        return await self.meal_repo.delete_ingredient(
-                fridge_id, meal_id, ingredient_id
-        )
+        return await self.meal_repo.delete_ingredient(fridge_id, meal_id, ingredient_id)
