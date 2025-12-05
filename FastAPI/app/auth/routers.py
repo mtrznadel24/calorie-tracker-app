@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
@@ -8,6 +9,8 @@ from app.auth.schemas import Token
 from app.core.exceptions import UnauthorizedError
 from app.user.schemas import UserCreate
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -15,6 +18,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def register(
     auth_service: AuthServiceDep, response: Response, user_in: UserCreate
 ) -> Token:
+    logger.info("register attempt for email=%s", user_in.email)
     access_token, refresh_token = await auth_service.register_user(user_in)
     response.set_cookie(
         key="refresh_token",
@@ -24,6 +28,7 @@ async def register(
         samesite="lax",
         max_age=3600 * 24 * 7,
     )
+    logger.info("User registered successfully email=%s", user_in.email)
     return Token(access_token=access_token, token_type="bearer")
 
 
@@ -33,6 +38,7 @@ async def login(
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
+    logger.info("Login attempt for username=%s", form_data.username)
     access_token, refresh_token = await auth_service.login_user(form_data)
     response.set_cookie(
         key="refresh_token",
@@ -42,6 +48,7 @@ async def login(
         samesite="lax",
         max_age=3600 * 24 * 7,
     )
+    logger.info("Login successful for username=%s", form_data.username)
     return Token(access_token=access_token, token_type="bearer")
 
 
@@ -61,9 +68,11 @@ async def refresh(
             samesite="lax",
             max_age=3600 * 24 * 7,
         )
+        logger.info("Token refreshed successfully")
         return Token(access_token=access_token, token_type="bearer")
     except UnauthorizedError:
         response.delete_cookie(key="refresh_token")
+        logger.warning("Invalid refresh token used")
         raise HTTPException(status_code=401, detail="Invalid refresh token") from None
 
 

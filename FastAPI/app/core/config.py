@@ -1,11 +1,19 @@
+import os
 import pathlib
 
 from pydantic_settings import BaseSettings
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent.parent
 
+env = os.getenv("ENVIRONMENT", "dev")
+
+if env == "dev":
+    env_file = BASE_DIR / ".env"
+else:
+    env_file = BASE_DIR / f".env.{env}"
 
 class Settings(BaseSettings):
+    ENVIRONMENT: str = "dev"
     DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
     SECRET_KEY: str = "default-key"
     ALGORITHM: str = "HS256"
@@ -16,9 +24,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "FastAPI App"
 
     model_config = {
-        "env_file": str(BASE_DIR / ".env"),
+        "env_file": str(env_file),
         "env_file_encoding": "utf-8",
-        "extra": "ignore",
+        "extra": "ignore"
     }
 
 

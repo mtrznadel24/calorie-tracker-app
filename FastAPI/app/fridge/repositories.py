@@ -56,9 +56,6 @@ class FridgeProductRepository(BaseRepository[FridgeProduct]):
         await self.db.delete(product)
         try:
             await self.db.commit()
-        except IntegrityError:
-            await self.db.rollback()
-            raise
         except SQLAlchemyError:
             await self.db.rollback()
             raise
@@ -99,9 +96,6 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
         await self.db.delete(meal)
         try:
             await self.db.commit()
-        except IntegrityError:
-            await self.db.rollback()
-            raise
         except SQLAlchemyError:
             await self.db.rollback()
             raise
@@ -235,9 +229,6 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
         await self.db.delete(ingredient)
         try:
             await self.db.commit()
-        except IntegrityError:
-            await self.db.rollback()
-            raise
         except SQLAlchemyError:
             await self.db.rollback()
             raise
