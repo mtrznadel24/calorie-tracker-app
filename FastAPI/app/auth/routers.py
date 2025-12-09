@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_limiter.depends import RateLimiter
 
 from app.auth.dependencies import AuthServiceDep
 from app.auth.schemas import Token
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=Token, status_code=201)
 async def register(
-    auth_service: AuthServiceDep, response: Response, user_in: UserCreate
+    auth_service: AuthServiceDep, response: Response, user_in: UserCreate, _: int = Depends(RateLimiter(times=5, seconds=300))
 ) -> Token:
     logger.info("register attempt for email=%s", user_in.email)
     access_token, refresh_token = await auth_service.register_user(user_in)
@@ -37,6 +38,7 @@ async def login(
     auth_service: AuthServiceDep,
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    _: int = Depends(RateLimiter(times=5, seconds=300))
 ) -> Token:
     logger.info("Login attempt for username=%s", form_data.username)
     access_token, refresh_token = await auth_service.login_user(form_data)
@@ -54,7 +56,7 @@ async def login(
 
 @router.post("/refresh", response_model=Token, status_code=200)
 async def refresh(
-    auth_service: AuthServiceDep, response: Response, refresh_token: str = Cookie(...)
+    auth_service: AuthServiceDep, response: Response, refresh_token: str = Cookie(...), _: int = Depends(RateLimiter(times=10, seconds=60))
 ) -> Token:
     try:
         access_token, new_refresh_token = await auth_service.refresh_tokens(

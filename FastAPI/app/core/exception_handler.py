@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
+from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 from app.core.exceptions import ConflictError, NotFoundError, UnauthorizedError
 
@@ -23,4 +24,11 @@ def register_exception_handlers(app: FastAPI):
         return JSONResponse(
             content={"message": "Database error"},
             status_code=500,
+        )
+
+    @app.exception_handler(HTTP_429_TOO_MANY_REQUESTS)
+    async def too_many_request_exception_handler(request: Request, exc):
+        return JSONResponse(
+            content={"message": "Too many attempts, please try again later"},
+            status_code=HTTP_429_TOO_MANY_REQUESTS
         )
