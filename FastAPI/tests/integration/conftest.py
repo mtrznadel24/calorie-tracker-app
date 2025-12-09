@@ -1,6 +1,8 @@
+import logging
 import os
 import pathlib
 
+import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
@@ -35,6 +37,11 @@ test_session_manager = DBSessionManager(
     poolclass=NullPool,
     echo=False,
 )
+
+
+@pytest.fixture(autouse=True, scope="session")
+def configure_logs():
+    logging.basicConfig(level=logging.CRITICAL)
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)

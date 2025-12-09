@@ -13,10 +13,11 @@ venv.bak/
 
 # Environment variables
 .env
+.env.prod
 .envrc
 
 # IDE settings
-.idea/
+.idea/ 
 .vscode/
 
 # Docker

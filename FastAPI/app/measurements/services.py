@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 
 from sqlalchemy.exc import IntegrityError
@@ -7,6 +8,8 @@ from app.core.exceptions import ConflictError
 from app.measurements.models import Measurement, Weight
 from app.measurements.repositories import MeasurementRepository, WeightRepository
 from app.measurements.schemas import MeasurementsCreate, WeightCreate
+
+logger = logging.getLogger(__name__)
 
 
 class MeasurementsService:
@@ -40,6 +43,11 @@ class MeasurementsService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
+            logger.warning(
+                "Attempt to create duplicate measurements for user_id=%s date=%s",
+                user_id,
+                data.date,
+            )
             raise ConflictError(
                 f"Measurements with date:{data.date} already exists"
             ) from None
@@ -80,6 +88,9 @@ class WeightService:
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:
+            logger.warning(
+                "Duplicate weight entry for user_id=%s date=%s", user_id, data.date
+            )
             raise ConflictError(
                 f"Weight with date:{data.date} already exists"
             ) from None

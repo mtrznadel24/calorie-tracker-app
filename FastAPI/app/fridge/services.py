@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 
 from sqlalchemy.exc import IntegrityError
@@ -21,6 +22,8 @@ from app.fridge.schemas import (
 )
 from app.utils.enums import NutrientType
 
+logger = logging.getLogger(__name__)
+
 
 # Fridge products
 class FridgeService:
@@ -38,6 +41,10 @@ class FridgeService:
         try:
             await self.product_repo.commit_or_conflict()
         except IntegrityError:
+            logger.warning(
+                f"Duplicate product attempt: "
+                f"name='{data.product_name}', fridge_id={fridge_id}"
+            )
             raise ConflictError("Product already exists") from None
         return await self.product_repo.refresh_and_return(product)
 
@@ -73,10 +80,7 @@ class FridgeService:
     async def delete_fridge_product(
         self, fridge_id: int, product_id: int
     ) -> FridgeProduct:
-        try:
-            return await self.product_repo.delete_fridge_product(fridge_id, product_id)
-        except IntegrityError:
-            raise ConflictError("Could not delete fridge product") from None
+        return await self.product_repo.delete_fridge_product(fridge_id, product_id)
 
     # Fridge meals
 
@@ -88,6 +92,9 @@ class FridgeService:
         try:
             await self.meal_repo.commit_or_conflict()
         except IntegrityError:
+            logger.warning(
+                f"Duplicate meal attempt: name='{data.name}', fridge_id={fridge_id}"
+            )
             raise ConflictError("Meal already exists") from None
         return await self.meal_repo.refresh_and_return(meal)
 
@@ -118,10 +125,7 @@ class FridgeService:
         return await self.meal_repo.refresh_and_return(meal)
 
     async def delete_fridge_meal(self, fridge_id: int, meal_id: int) -> FridgeMeal:
-        try:
-            return await self.meal_repo.delete_fridge_meal(fridge_id, meal_id)
-        except IntegrityError:
-            raise ConflictError("Could not delete fridge meal") from None
+        return await self.meal_repo.delete_fridge_meal(fridge_id, meal_id)
 
     async def get_fridge_meal_nutrient_sum(
         self, fridge_id: int, meal_id: int, nutrient_type: NutrientType
@@ -186,9 +190,4 @@ class FridgeService:
         self, fridge_id: int, meal_id: int, ingredient_id: int
     ) -> FridgeMealIngredient:
         await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
-        try:
-            return await self.meal_repo.delete_ingredient(
-                fridge_id, meal_id, ingredient_id
-            )
-        except IntegrityError:
-            raise ConflictError("Could not delete ingredient") from None
+        return await self.meal_repo.delete_ingredient(fridge_id, meal_id, ingredient_id)
