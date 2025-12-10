@@ -2,6 +2,7 @@ import logging
 import os
 import pathlib
 
+import fakeredis.aioredis
 import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
@@ -12,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import models  # noqa: F401
 from app.auth.dependencies import get_current_user
 from app.core.db import Base, DBSessionManager, get_db
+from app.core.redis_session import get_redis_client
 from app.core.security import get_hashed_password
 from app.fridge.dependencies import get_fridge
 from app.fridge.models import (
@@ -75,6 +77,11 @@ async def session():
 
 
 @pytest_asyncio.fixture
+async def fake_redis():
+    return fakeredis.aioredis.FakeRedis(decode_responses=True)
+
+
+@pytest_asyncio.fixture
 async def user(session):
     hashed_password = get_hashed_password("password1")
     u = User(
@@ -109,6 +116,30 @@ async def client(session, user):
     app = get_app()
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user] = override_get_current_user
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def client_with_redis(session, user, fake_redis):
+    async def override_get_db():
+        yield session
+
+    async def override_get_redis_client():
+        yield fake_redis
+
+    async def override_get_current_user():
+        return user
+
+    app = get_app()
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_redis_client] = override_get_redis_client
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://testserver"

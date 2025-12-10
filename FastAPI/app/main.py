@@ -3,13 +3,14 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi_limiter import FastAPILimiter
 
 from app.auth.routers import router as auth_router
 from app.core.config import settings
 from app.core.db import session_manager
 from app.core.exception_handler import register_exception_handlers
 from app.core.logging_config import setup_logging
-from app.core.redis_session import close_redis_session
+from app.core.redis_session import close_redis_session, get_redis_client
 from app.fridge.routers import router as fridge_router
 from app.meal.routers import router as meal_router
 from app.measurements.routers import measurements_router, weights_router
@@ -19,6 +20,8 @@ from app.user.routers import router as user_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Application lifespan started")
+    await FastAPILimiter.init(get_redis_client())
+    logger.info("Rate limiter is initialized")
     try:
         yield
     finally:
@@ -26,6 +29,7 @@ async def lifespan(app: FastAPI):
             logger.info("Closing database session manager")
             await session_manager.close()
         logger.info("Closing Redis session")
+        await FastAPILimiter.close()
         await close_redis_session()
         logger.info("Application lifespan finished")
 
