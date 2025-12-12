@@ -1,35 +1,70 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
+import { Tabs } from 'expo-router';
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useColorScheme } from "react-native";
+import { colors } from "../constants/colors";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
+const Layout = () => {
   const colorScheme = useColorScheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarActiveTintColor: colorScheme === "dark" ? colors.tabBar.dark.active : colors.tabBar.light.active,
+        tabBarInactiveTintColor: colorScheme === "dark" ? colors.tabBar.dark.inactive : colors.tabBar.light.inactive,
+        tabBarStyle: {
+          height: 62,
+          paddingTop: 5,
+          backgroundColor: colorScheme === "dark" ? colors.tabBar.dark.background : colors.tabBar.light.background,
+          borderTopWidth: 0,
+          elevation: 0,
+        },
+      }}
+    >
       <Tabs.Screen
-        name="index"
+        name="meals"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Meals",
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name="restaurant"
+              size={focused ? size + 2 : size}
+              color={color}
+            />
+          ),
         }}
       />
+
       <Tabs.Screen
-        name="explore"
+        name="fridge"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Fridge",
+          tabBarIcon: ({ focused, color, size }) => (
+            <MaterialCommunityIcons
+              name="fridge"
+              size={focused ? size + 2 : size}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name="person"
+              size={focused ? size + 2 : size}
+              color={color}
+            />
+          ),
         }}
       />
     </Tabs>
   );
 }
+
+export default Layout;
