@@ -4,12 +4,15 @@ import {
   DefaultTheme as NavigationDefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import {Stack, useRouter, useSegments} from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "../constants/theme";
-import { AuthProvider } from "@/contexts/AuthContext";
+import {AuthProvider, useAuth} from "@/contexts/AuthContext";
+import {useEffect} from "react";
+import {ActivityIndicator, View} from "react-native";
+import Toast from "react-native-toast-message";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -41,16 +44,47 @@ const MyLightTheme = {
   },
 };
 
+const InitialLayout = () => {
+  const { user, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+    if (!user && !inAuthGroup) {
+      router.replace("/(auth)/login");
+    } else if (user && inAuthGroup) {
+      router.replace("/(tabs)/meals")
+    }
+  }, [user, isLoading, segments]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: Colors.dark[800] }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)"/>
+      <Stack.Screen name="(auth)"/>
+    </Stack>
+  )
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? MyDarkTheme : MyLightTheme}>
       <AuthProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
+        <InitialLayout/>
         <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+        <Toast />
       </AuthProvider>
     </ThemeProvider>
   );
