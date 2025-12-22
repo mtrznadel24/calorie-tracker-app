@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 from fastapi_limiter import FastAPILimiter
+from starlette.middleware.cors import CORSMiddleware
 
 from app.auth.routers import router as auth_router
 from app.core.config import settings
@@ -36,6 +37,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title=settings.PROJECT_NAME, docs_url="/docs")
 register_exception_handlers(app)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # change in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 setup_logging()
 logger = logging.getLogger(__name__)

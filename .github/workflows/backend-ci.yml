@@ -14,6 +14,8 @@ jobs:
     defaults:
       run:
         working-directory: ./FastAPI
+    env:
+      ENVIRONMENT: test
     steps:
       - uses: actions/checkout@v4
 
@@ -45,7 +47,8 @@ jobs:
     defaults:
       run:
         working-directory: ./FastAPI
-
+    env:
+      ENVIRONMENT: test
     services:
       postgres:
         image: postgres:16

@@ -10,7 +10,7 @@ module.exports = {
         accent: "#5EEAD4",
 
         light: {
-          50:  "#FFFFFF",
+          50: "#FFFFFF",
           100: "#F8F9FB",
           200: "#EEF1F5",
           300: "#D9DEE5",
@@ -39,4 +39,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};

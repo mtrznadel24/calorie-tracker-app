@@ -20,11 +20,8 @@ class TestAuthEndpoints:
 
         data = response.json()
         assert data["access_token"] is not None
+        assert data["refresh_token"] is not None
         assert data["token_type"] == "bearer"
-
-        cookies = response.cookies
-        assert "refresh_token" in cookies
-        assert cookies["refresh_token"] is not None
 
     async def test_register_weak_password(self, client_with_redis):
         payload = {
@@ -74,32 +71,32 @@ class TestAuthEndpoints:
 
         data = response.json()
         assert data["access_token"] is not None
+        assert data["refresh_token"] is not None
         assert data["token_type"] == "bearer"
-
-        cookies = response.cookies
-        assert "refresh_token" in cookies
-        assert cookies["refresh_token"] is not None
 
     async def test_login_wrong_password(self, client_with_redis, user):
         payload = {"username": "test@example.com", "password": "password11"}
         response = await client_with_redis.post("/auth/login", data=payload)
         assert response.status_code == 401
 
-    async def test_refresh_success(self, client_with_refresh_token, user):
-        response = await client_with_refresh_token.post("/auth/refresh")
-        print(response.json())
+    async def test_refresh_success(
+        self, client_with_refresh_token, user, test_refresh_token
+    ):
+        response = await client_with_refresh_token.post(
+            "/auth/refresh", json={"refresh_token": test_refresh_token}
+        )
         assert response.status_code == 200
 
         data = response.json()
         assert data["access_token"] is not None
+        assert data["refresh_token"] is not None
+        assert data["refresh_token"] != test_refresh_token
         assert data["token_type"] == "bearer"
 
-        cookies = response.cookies
-        assert "refresh_token" in cookies
-        assert cookies["refresh_token"] is not None
-
-    async def test_logout_success(self, client_with_refresh_token, user):
-        response = await client_with_refresh_token.post("/auth/logout")
+    async def test_logout_success(
+        self, client_with_refresh_token, user, test_refresh_token
+    ):
+        response = await client_with_refresh_token.post(
+            "/auth/logout", json={"refresh_token": test_refresh_token}
+        )
         assert response.status_code == 200
-        cookies = response.cookies
-        assert "refresh_token" not in cookies

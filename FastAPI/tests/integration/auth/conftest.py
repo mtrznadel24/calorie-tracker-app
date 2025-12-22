@@ -47,7 +47,6 @@ async def client_with_refresh_token(session, fake_redis, test_refresh_token):
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://testserver",
-        cookies={"refresh_token": test_refresh_token},
     ) as client:
         yield client
 
