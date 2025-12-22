@@ -23,7 +23,6 @@ class TestAuthEndpoints:
         assert data["refresh_token"] is not None
         assert data["token_type"] == "bearer"
 
-
     async def test_register_weak_password(self, client_with_redis):
         payload = {
             "username": "testuser43",
@@ -80,8 +79,12 @@ class TestAuthEndpoints:
         response = await client_with_redis.post("/auth/login", data=payload)
         assert response.status_code == 401
 
-    async def test_refresh_success(self, client_with_refresh_token, user, test_refresh_token):
-        response = await client_with_refresh_token.post("/auth/refresh", json={"refresh_token": test_refresh_token})
+    async def test_refresh_success(
+        self, client_with_refresh_token, user, test_refresh_token
+    ):
+        response = await client_with_refresh_token.post(
+            "/auth/refresh", json={"refresh_token": test_refresh_token}
+        )
         assert response.status_code == 200
 
         data = response.json()
@@ -90,6 +93,10 @@ class TestAuthEndpoints:
         assert data["refresh_token"] != test_refresh_token
         assert data["token_type"] == "bearer"
 
-    async def test_logout_success(self, client_with_refresh_token, user, test_refresh_token):
-        response = await client_with_refresh_token.post("/auth/logout", json={"refresh_token": test_refresh_token})
+    async def test_logout_success(
+        self, client_with_refresh_token, user, test_refresh_token
+    ):
+        response = await client_with_refresh_token.post(
+            "/auth/logout", json={"refresh_token": test_refresh_token}
+        )
         assert response.status_code == 200

@@ -1,7 +1,7 @@
-import { Colors } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { TextInput, useColorScheme, View } from 'react-native';
+import { Colors } from "@/constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { TextInput, useColorScheme, View } from "react-native";
 
 type SearchBarProps = {
   value: string;
@@ -9,9 +9,13 @@ type SearchBarProps = {
   placeholder?: string;
 };
 
-const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, placeholder = "Search"}) => {
+const SearchBar: React.FC<SearchBarProps> = ({
+  value,
+  onChangeText,
+  placeholder = "Search",
+}) => {
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
 
   return (
     <View
@@ -29,7 +33,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, placeholder 
         underlineColorAndroid="transparent"
         className="ml-3 flex-1 text-base"
         style={{
-          color: isDark ? Colors.light[100] : Colors.dark[700]
+          color: isDark ? Colors.light[100] : Colors.dark[700],
         }}
         value={value}
         onChangeText={onChangeText}

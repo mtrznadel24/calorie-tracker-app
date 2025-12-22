@@ -1,11 +1,11 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.auth.dependencies import AuthServiceDep
-from app.auth.schemas import TokenPair, RefreshTokenRequest
+from app.auth.schemas import RefreshTokenRequest, TokenPair
 from app.core.exceptions import UnauthorizedError
 from app.core.rate_limiting import check_and_record_login_attempt, clear_login_attempts
 from app.core.rate_limiting import rate_limiter as RateLimiter
@@ -37,7 +37,9 @@ async def register(
     # )
 
     logger.info("User registered successfully email=%s", user_in.email)
-    return TokenPair(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+    return TokenPair(
+        access_token=access_token, refresh_token=refresh_token, token_type="bearer"
+    )
 
 
 @router.post("/login", response_model=TokenPair, status_code=200)
@@ -65,7 +67,9 @@ async def login(
     # )
 
     logger.info("Login successful for username=%s", form_data.username)
-    return TokenPair(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+    return TokenPair(
+        access_token=access_token, refresh_token=refresh_token, token_type="bearer"
+    )
 
 
 @router.post("/refresh", response_model=TokenPair, status_code=200)
@@ -90,16 +94,18 @@ async def refresh(
         # )
 
         logger.info("Token refreshed successfully")
-        return TokenPair(access_token=access_token, refresh_token=new_refresh_token, token_type="bearer")
+        return TokenPair(
+            access_token=access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer",
+        )
     except UnauthorizedError:
-        #response.delete_cookie(key="refresh_token")
+        # response.delete_cookie(key="refresh_token")
         logger.warning("Invalid refresh token used")
         raise HTTPException(status_code=401, detail="Invalid refresh token") from None
 
 
 @router.post("/logout", status_code=200)
-async def logout(
-    auth_service: AuthServiceDep, refresh_token_in: RefreshTokenRequest
-):
-    #response.delete_cookie(key="refresh_token")
+async def logout(auth_service: AuthServiceDep, refresh_token_in: RefreshTokenRequest):
+    # response.delete_cookie(key="refresh_token")
     return await auth_service.logout_user(refresh_token_in.refresh_token)
