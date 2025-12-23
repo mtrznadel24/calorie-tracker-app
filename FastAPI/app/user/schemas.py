@@ -44,7 +44,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     height: float | None = Field(default=None, gt=0, lt=300)
     age: int | None = Field(default=None, gt=0, lt=120)
-    gender: Gender | None
+    gender: Gender | None = Field(default=None)
     activity_level: float | None = Field(default=None, ge=1, le=5)
 
     @field_validator("password")
@@ -72,6 +72,7 @@ class UserRead(BaseModel):
 
 class UserUpdate(BaseModel):
     username: str | None = Field(
+        default=None,
         min_length=3,
         max_length=32,
         pattern=r"^[a-zA-Z0-9_.]+$",

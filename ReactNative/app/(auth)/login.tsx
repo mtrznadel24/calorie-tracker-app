@@ -11,6 +11,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import ScrollView = Animated.ScrollView;
 import Toast from "react-native-toast-message";
+import {KeyboardAwareScrollView} from "react-native-keyboard-aware-scroll-view";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -44,17 +45,17 @@ const Login = () => {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      className="flex-1 bg-light-50 dark:bg-dark-900"
+    <KeyboardAwareScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      className="bg-light-50 dark:bg-dark-900"
+      enableOnAndroid={true}
+      extraScrollHeight={20}
+      enableAutomaticScroll={true}
+      keyboardShouldPersistTaps="handled"
+      bounces={false}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
-          className="p-6"
-          keyboardShouldPersistTaps="handled"
-        >
-
+        <View className="p-6 pt-64">
           <Text className="text-3xl font-bold mb-8 text-center text-dark-900 dark:text-text-light">
             Welcome! 👋
           </Text>
@@ -76,7 +77,7 @@ const Login = () => {
                       ? "border-state-error"
                       : "border-light-300 dark:border-dark-600"
                   )}
-                  placeholder="example@email.com"
+                  placeholder="email"
                   placeholderTextColor="#9CA3AF"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -110,7 +111,7 @@ const Login = () => {
                       ? "border-state-error"
                       : "border-light-300 dark:border-dark-600"
                   )}
-                  placeholder="••••••••"
+                  placeholder="password"
                   placeholderTextColor="#9CA3AF"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -161,10 +162,9 @@ const Login = () => {
               )}
             </Pressable>
           </View>
-
-        </ScrollView>
+        </View>
       </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 

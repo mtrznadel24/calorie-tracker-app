@@ -1,19 +1,18 @@
 import React, {useState, createContext, useContext, useEffect} from "react";
 import {tokenStorage} from "@/core/tokenStorage";
 import {api} from "@/api/axiosInstance";
+import axios, { AxiosError } from 'axios';
 
 export interface RegisterFormData {
   email: string;
   username: string;
   password: string;
   confirmPassword: string;
-  height: number | null;
-  age: number | null;
-  gender: string | null;
 }
 
 interface AuthContextType {
   user: any;
+  setUser: React.Dispatch<React.SetStateAction<any>>;
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   register: (data: RegisterFormData) => Promise<void>;
@@ -76,9 +75,10 @@ export const AuthProvider = ({children}: { children: React.ReactNode }) => {
 
     try {
       const payload = {
-        ...data,
+        username: data.username,
+        email: data.email,
+        password: data.password,
         confirm_password: data.confirmPassword,
-        activity_level: null,
       };
 
       const response = await api.post("/auth/register", payload);
@@ -86,9 +86,9 @@ export const AuthProvider = ({children}: { children: React.ReactNode }) => {
       await tokenStorage.setTokens(access_token, refresh_token);
       const userResponse = await api.get("/user/me");
       setUser(userResponse.data);
-    } catch (e) {
-      console.log("Register error", e);
-      throw e;
+    } catch (error: any) {
+      console.log("Register error", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +113,7 @@ export const AuthProvider = ({children}: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{user, isLoading, login, register, logout}}>
+    <AuthContext.Provider value={{user, setUser, isLoading, login, register, logout}}>
       {children}
     </AuthContext.Provider>
   );
