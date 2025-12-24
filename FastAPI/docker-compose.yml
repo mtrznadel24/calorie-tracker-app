@@ -24,6 +24,8 @@
         - "8000:8000"
       env_file:
         - .env
+      volumes:
+        - .:/FastAPI
       depends_on:
         - db
     cache:

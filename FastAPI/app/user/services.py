@@ -44,6 +44,7 @@ class UserService:
         self.repo.add(fridge_instance)
         try:
             await self.repo.commit_or_conflict()
+            await self.repo.refresh(user_instance)
             logger.info(
                 "User created successfully id=%s email=%s",
                 user_instance.id,
@@ -51,7 +52,7 @@ class UserService:
             )
         except IntegrityError:
             raise ConflictError("User already exists") from None
-        return await self.repo.refresh_and_return(user_instance)
+        return user_instance
 
     async def update_user(self, user_id: int, data: UserUpdate) -> User:
         user_instance = await self.repo.get_by_id(user_id)
