@@ -30,7 +30,7 @@ const Profile = () => {
         {isLoading ? (
           <ActivityIndicator color="white" />
         ) : (
-          <Text className="text-white font-bold text-lg">Wyloguj się</Text>
+          <Text className="text-white font-bold text-lg">Logout</Text>
         )}
       </Pressable>
     </View>
