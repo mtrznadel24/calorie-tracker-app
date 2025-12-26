@@ -7,38 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 const FridgeMealsScreen = () => {
   const [searchText, setSearchText] = useState("");
   const [showFavourites, setShowFavourites] = useState(false);
-  const [meals, setMeals] = useState([
-    {
-      id: 1,
-      name: "Royal oatmeal",
-      calories: 450,
-      proteins: 15,
-      fats: 12,
-      carbs: 60,
-      count: 4,
-      isFavourite: true,
-    },
-    {
-      id: 2,
-      name: "Chicken and rice",
-      calories: 600,
-      proteins: 45,
-      fats: 10,
-      carbs: 70,
-      count: 3,
-      isFavourite: false,
-    },
-    {
-      id: 3,
-      name: "Greece Salad",
-      calories: 320,
-      proteins: 8,
-      fats: 25,
-      carbs: 10,
-      count: 6,
-      isFavourite: false,
-    },
-  ]);
+  const [meals, setMeals] = useState([])
 
   return (
     <View className="flex-1 bg-light-100 dark:bg-dark-800 relative">
