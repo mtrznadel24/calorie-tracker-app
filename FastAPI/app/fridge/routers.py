@@ -4,7 +4,6 @@ from fastapi import APIRouter
 
 from app.fridge.dependencies import FridgeDep, FridgeServiceDep
 from app.fridge.models import (
-    FoodCategory,
     FridgeMeal,
     FridgeMealIngredient,
     FridgeProduct,
@@ -39,9 +38,7 @@ async def read_fridge_products(
     fridge_service: FridgeServiceDep,
     fridge: FridgeDep,
 ) -> Sequence[FridgeProduct]:
-    return await fridge_service.get_fridge_products(
-        fridge.id
-    )
+    return await fridge_service.get_fridge_products(fridge.id)
 
 
 @router.get("/products/{product_id}", response_model=FridgeProductRead)
