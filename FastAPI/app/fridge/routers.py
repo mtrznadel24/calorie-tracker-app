@@ -79,11 +79,8 @@ async def add_fridge_meal(
 async def read_fridge_meals(
     fridge_service: FridgeServiceDep,
     fridge: FridgeDep,
-    is_favourite: bool = False,
-    skip: int = 0,
-    limit: int = 25,
 ) -> Sequence[FridgeMeal]:
-    return await fridge_service.get_fridge_meals(fridge.id, is_favourite, skip, limit)
+    return await fridge_service.get_fridge_meals(fridge.id)
 
 
 @router.get("/meals/{meal_id}", response_model=FridgeMealRead)

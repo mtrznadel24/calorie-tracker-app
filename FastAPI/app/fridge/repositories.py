@@ -53,19 +53,35 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, FridgeMeal)
 
-    async def get_fridge_meal_list(
-        self,
-        fridge_id: int,
-        is_favourite: bool,
-        skip: int,
-        limit: int,
-    ) -> Sequence[FridgeMeal]:
-        stmt = select(FridgeMeal).where(FridgeMeal.fridge_id == fridge_id)
-        if is_favourite:
-            stmt = stmt.where(FridgeMeal.is_favourite.is_(True))
-        stmt = stmt.offset(skip).limit(limit)
+    async def get_fridge_meal_list(self, fridge_id: int):
+        def calc_macro(column_name):
+            return func.coalesce(
+                func.sum(
+                    (getattr(FridgeProduct, column_name) * FridgeMealIngredient.weight) / 100
+                ),
+                0
+            )
+
+        stmt = (
+            select(
+                FridgeMeal.id,
+                FridgeMeal.name,
+                FridgeMeal.is_favourite,
+                calc_macro("calories_100g").label("calories"),
+                calc_macro("proteins_100g").label("proteins"),
+                calc_macro("fats_100g").label("fats"),
+                calc_macro("carbs_100g").label("carbs"),
+                func.count(FridgeMealIngredient.id).label("products_count")
+            )
+            .select_from(FridgeMeal)
+            .outerjoin(FridgeMealIngredient, FridgeMeal.id == FridgeMealIngredient.fridge_meal_id)
+            .outerjoin(FridgeProduct, FridgeMealIngredient.fridge_product_id == FridgeProduct.id)
+            .where(FridgeMeal.fridge_id == fridge_id)
+            .group_by(FridgeMeal.id)
+        )
+
         result = await self.db.execute(stmt)
-        return result.scalars().all()
+        return result.all()
 
     async def get_fridge_meal(self, fridge_id: int, meal_id: int) -> FridgeMeal:
         result = await self.db.execute(

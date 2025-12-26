@@ -45,9 +45,14 @@ class FridgeMealCreate(BaseModel):
 
 class FridgeMealRead(BaseModel):
     id: int
-    fridge_id: int
     name: str = Field(pattern=r"^[a-zA-Z0-9\s\-.]+$")
     is_favourite: bool = False
+    calories: int
+    proteins: float
+    fats: float
+    carbs: float
+    products_count: int
+
 
     model_config = ConfigDict(from_attributes=True)
 

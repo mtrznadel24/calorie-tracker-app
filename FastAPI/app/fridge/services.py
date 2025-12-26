@@ -93,13 +93,10 @@ class FridgeService:
 
     async def get_fridge_meals(
         self,
-        fridge_id: int,
-        is_favourite: bool = False,
-        skip: int = 0,
-        limit: int = 25,
+        fridge_id: int
     ) -> Sequence[FridgeMeal]:
         return await self.meal_repo.get_fridge_meal_list(
-            fridge_id, is_favourite, skip, limit
+            fridge_id
         )
 
     async def get_fridge_meal(self, fridge_id: int, meal_id: int) -> FridgeMeal:

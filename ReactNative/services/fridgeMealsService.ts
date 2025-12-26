@@ -40,3 +40,5 @@ const fridgeMealsService = {
     return response.data;
   }
 }
+
+export default fridgeMealsService;
