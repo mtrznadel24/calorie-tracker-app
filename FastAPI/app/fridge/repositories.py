@@ -21,18 +21,9 @@ class FridgeProductRepository(BaseRepository[FridgeProduct]):
 
     async def get_fridge_product_list(
         self,
-        fridge_id: int,
-        is_favourite: bool,
-        category: FoodCategory,
-        skip: int,
-        limit: int,
+        fridge_id: int
     ) -> Sequence[FridgeProduct]:
         stmt = select(FridgeProduct).where(FridgeProduct.fridge_id == fridge_id)
-        if is_favourite:
-            stmt = stmt.where(FridgeProduct.is_favourite.is_(True))
-        if category is not None:
-            stmt = stmt.where(FridgeProduct.category == category)
-        stmt = stmt.offset(skip).limit(limit)
         result = await self.db.execute(stmt)
         return result.scalars().all()
 

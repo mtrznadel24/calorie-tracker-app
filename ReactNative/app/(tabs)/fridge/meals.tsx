@@ -1,5 +1,5 @@
 import SearchBar from "@/components/SearchBar";
-import MealCard from "@/components/MealCard";
+import MealCard from "@/components/fridge/MealCard";
 import React, { useState } from "react";
 import { FlatList, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

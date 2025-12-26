@@ -1,8 +1,14 @@
-import { View, Text, Pressable, FlatList } from "react-native";
-import React, { useState } from "react";
+import {View, Text, Pressable, FlatList, ActivityIndicator} from "react-native";
+import React, {useEffect, useMemo, useState} from "react";
 import SearchBar from "@/components/SearchBar";
 import { Ionicons } from "@expo/vector-icons";
-import ProductCard from "@/components/ProductCard";
+import ProductCard from "@/components/fridge/ProductCard";
+import fridgeProductsService, {AddProductData, Product, UpdateProductData} from "@/services/fridgeProductsService";
+import {useAuth} from "@/contexts/AuthContext";
+import Toast from "react-native-toast-message";
+import AddProductModal from "@/components/fridge/AddProductModal";
+import ProductDetailsModal from "@/components/fridge/EditProductModal";
+import EditProductModal from "@/components/fridge/EditProductModal";
 
 const CATEGORIES = [
   "All",
@@ -18,61 +24,114 @@ const CATEGORIES = [
 ];
 
 const FridgeProductsScreen = () => {
+  const { isLoading } = useAuth();
   const [searchText, setSearchText] = useState("");
   const [showFavourites, setShowFavourites] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Apple",
-      category: "fruits",
-      isFavourite: true,
-      calories_100g: 52,
-      proteins_100g: 0.3,
-      fats_100g: 0.2,
-      carbs_100g: 14,
-    },
-    {
-      id: 2,
-      name: "Chicken Breast",
-      category: "meat and fish",
-      isFavourite: false,
-      calories_100g: 165,
-      proteins_100g: 31,
-      fats_100g: 3.6,
-      carbs_100g: 0,
-    },
-    {
-      id: 3,
-      name: "Greek Yogurt",
-      category: "dairy",
-      isFavourite: false,
-      calories_100g: 59,
-      proteins_100g: 10,
-      fats_100g: 0.4,
-      carbs_100g: 3.6,
-    },
-    {
-      id: 4,
-      name: "Banana",
-      category: "fruits",
-      isFavourite: false,
-      calories_100g: 89,
-      proteins_100g: 1.1,
-      fats_100g: 0.3,
-      carbs_100g: 23,
-    },
-    {
-      id: 5,
-      name: "Broccoli",
-      category: "vegetables",
-      isFavourite: true,
-      calories_100g: 34,
-      proteins_100g: 2.8,
-      fats_100g: 0.4,
-      carbs_100g: 7,
-    },
-  ]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isProductModalVisible, setIsProductModalVisible] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsFetching(true);
+        const data = await fridgeProductsService.getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.log(error);
+        Toast.show({
+        type: 'error',
+        text1: 'Fetching data fail',
+        text2: 'Something went wrong ❌'
+        });
+      } finally {
+        setIsFetching(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((item) => {
+      const matchesSearch = item.product_name.toLowerCase().includes(searchText.toLowerCase());
+      const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
+      const matchesFavourite = !showFavourites || item.is_favourite;
+      return matchesSearch && matchesCategory && matchesFavourite;
+    })
+  }, [products, searchText, selectedCategory, showFavourites]);
+
+  const handleAddProduct = async (newProductData: AddProductData) => {
+    try {
+      await fridgeProductsService.addProduct(newProductData);
+
+      const updatedList = await fridgeProductsService.getProducts();
+      setProducts(updatedList);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Product added!'
+      });
+    } catch (error) {
+      console.log(error);
+      Toast.show({ type: 'error', text1: 'Failed to add product' });
+    }
+  };
+
+  const handleToggleFavourite = async (product: Product) => {
+    try {
+      const updatedProducts = products.map(
+        p => p.id === product.id ? {...p, is_favourite: !p.is_favourite } : p);
+      setProducts(updatedProducts);
+
+      await fridgeProductsService.updateProduct(product.id, {is_favourite: !product.is_favourite})
+    } catch (error) {
+      console.error(error);
+      setProducts(products);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to update product'
+      })
+    }
+  }
+
+  const handleUpdateProduct = async (product: Product, data: UpdateProductData) => {
+    try {
+      const response = await fridgeProductsService.updateProduct(product.id, data);
+
+      const updatedProducts = products.map(
+        p => p.id === product.id ? {...p, ...response} : p
+      );
+      setProducts(updatedProducts);
+      Toast.show({
+        type: 'success',
+        text1: 'Product updated!'
+      });
+
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to update product',
+      })
+    }
+  }
+
+  const handleDeleteProduct = async (product: Product) => {
+    try {
+      await fridgeProductsService.deleteProduct(product.id);
+      setProducts( (prevProducts) => prevProducts.filter((p) => p.id !== product.id));
+
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to delete product',
+      })
+    }
+  }
 
   return (
     <View className="flex-1 bg-light-100 dark:bg-dark-800 relative">
@@ -134,33 +193,63 @@ const FridgeProductsScreen = () => {
         />
       </View>
 
-      <FlatList
-        data={products}
-        keyExtractor={(item) => item.id.toString()}
-        className="mt-2"
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <ProductCard
-            id={item.id}
-            name={item.name}
-            category={item.category}
-            calories={item.calories_100g}
-            proteins={item.proteins_100g}
-            fats={item.fats_100g}
-            carbs={item.carbs_100g}
-            isFavourite={item.isFavourite}
-            onToggleFavourite={() =>
-              console.log("Clicked heart icon ID:", item.id)
+      {isFetching ? (
+        <View className="flex-1 justify-center items-center mt-10">
+            <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      ) : (
+        <FlatList
+            data={filteredProducts}
+            keyExtractor={(item) => item.id.toString()}
+            className="mt-2"
+            contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+                <View className="items-center justify-center mt-10">
+                    <Text className="text-gray-400">No products found</Text>
+                </View>
             }
-            onPress={() => console.log("Open product details ID:", item.id)}
-          />
-        )}
-      />
+            renderItem={({ item }) => (
+            <ProductCard
+                id={item.id}
+                name={item.product_name}
+                category={item.category}
+                calories={item.calories_100g}
+                proteins={item.proteins_100g}
+                fats={item.fats_100g}
+                carbs={item.carbs_100g}
+                isFavourite={item.is_favourite}
+                onToggleFavourite={() => handleToggleFavourite(item)}
+                onPress={() => {
+                  setIsProductModalVisible(true)
+                  setSelectedProduct(item)
+                  }
+                }
+            />
+            )}
+        />
+      )}
 
-      <Pressable className="absolute bottom-8 right-8 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg shadow-black/30 elevation-5 active:scale-95 transition-transform">
+      <Pressable
+        onPress={() => setIsModalVisible(true)}
+        className="absolute bottom-8 right-8 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg shadow-black/30 elevation-5 active:scale-95 transition-transform"
+      >
         <Ionicons name="add" size={32} color="white" />
       </Pressable>
+
+      <EditProductModal
+        isVisible={isProductModalVisible}
+        onClose={() => setIsProductModalVisible(false)}
+        onSubmit={handleUpdateProduct}
+        onDelete={handleDeleteProduct}
+        product={selectedProduct}
+      />
+
+      <AddProductModal
+        isVisible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onSubmit={handleAddProduct}
+      />
     </View>
   );
 };

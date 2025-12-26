@@ -38,13 +38,9 @@ async def add_fridge_product(
 async def read_fridge_products(
     fridge_service: FridgeServiceDep,
     fridge: FridgeDep,
-    is_favourite: bool = False,
-    category: FoodCategory | None = None,
-    skip: int = 0,
-    limit: int = 25,
 ) -> Sequence[FridgeProduct]:
     return await fridge_service.get_fridge_products(
-        fridge.id, is_favourite, category, skip, limit
+        fridge.id
     )
 
 
