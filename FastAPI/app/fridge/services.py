@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError
 from app.fridge.models import (
-    FoodCategory,
     FridgeMeal,
     FridgeMealIngredient,
     FridgeProduct,
@@ -51,14 +50,8 @@ class FridgeService:
     async def get_fridge_products(
         self,
         fridge_id: int,
-        is_favourite: bool = False,
-        category: FoodCategory = None,
-        skip: int = 0,
-        limit: int = 25,
     ) -> Sequence[FridgeProduct]:
-        return await self.product_repo.get_fridge_product_list(
-            fridge_id, is_favourite, category, skip, limit
-        )
+        return await self.product_repo.get_fridge_product_list(fridge_id)
 
     async def get_fridge_product(
         self, fridge_id: int, product_id: int

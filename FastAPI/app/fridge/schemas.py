@@ -28,7 +28,7 @@ class FridgeProductRead(BaseModel):
 
 
 class FridgeProductUpdate(BaseModel):
-    product_name: str | None = Field(pattern=r"^[a-zA-Z0-9\s\-.]+$")
+    product_name: str | None = Field(default=None, pattern=r"^[a-zA-Z0-9\s\-.]+$")
     calories_100g: float | None = Field(default=None, gt=0)
     proteins_100g: float | None = Field(default=None, gt=0)
     fats_100g: float | None = Field(default=None, gt=0)

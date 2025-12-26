@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.base_repository import BaseRepository
 from app.core.exceptions import NotFoundError
 from app.fridge.models import (
-    FoodCategory,
     FridgeMeal,
     FridgeMealIngredient,
     FridgeProduct,
@@ -19,20 +18,8 @@ class FridgeProductRepository(BaseRepository[FridgeProduct]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, FridgeProduct)
 
-    async def get_fridge_product_list(
-        self,
-        fridge_id: int,
-        is_favourite: bool,
-        category: FoodCategory,
-        skip: int,
-        limit: int,
-    ) -> Sequence[FridgeProduct]:
+    async def get_fridge_product_list(self, fridge_id: int) -> Sequence[FridgeProduct]:
         stmt = select(FridgeProduct).where(FridgeProduct.fridge_id == fridge_id)
-        if is_favourite:
-            stmt = stmt.where(FridgeProduct.is_favourite.is_(True))
-        if category is not None:
-            stmt = stmt.where(FridgeProduct.category == category)
-        stmt = stmt.offset(skip).limit(limit)
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
