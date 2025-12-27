@@ -1,16 +1,19 @@
 import SearchBar from "@/components/SearchBar";
 import MealCard from "@/components/fridge/MealCard";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {ActivityIndicator, FlatList, Pressable, Text, View} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import fridgeMealsService, {Meal} from "@/services/fridgeMealsService";
+import fridgeMealsService, {AddMealData, Meal} from "@/services/fridgeMealsService";
 import Toast from "react-native-toast-message";
+import AddMealModal from "@/components/fridge/AddMealModal";
+import fridgeProductsService, {Product} from "@/services/fridgeProductsService";
 
 const FridgeMealsScreen = () => {
   const [searchText, setSearchText] = useState("");
   const [showFavourites, setShowFavourites] = useState(false);
   const [meals, setMeals] = useState<Meal[]>([])
   const [isFetching, setIsFetching] = useState(true);
+  const [isAddMealModalVisible, setIsAddMealModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +34,47 @@ const FridgeMealsScreen = () => {
     }
     fetchData();
   }, [])
+
+  const filteredMeals = useMemo(() => {
+    return meals.filter((item) => {
+      const matchesSearch = item.name.toLowerCase().includes(searchText.toLowerCase());
+      const matchesFavourite = !showFavourites || item.is_favourite;
+      return matchesSearch && matchesFavourite;
+    })
+  }, [meals, searchText, showFavourites]);
+
+  const handleAddMeal = async (newMealData: AddMealData) => {
+    try {
+      const newMeal = await fridgeMealsService.addMeal(newMealData);
+
+      setMeals(prevMeals => [...prevMeals, newMeal]);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Product added!'
+      });
+    } catch (error) {
+      console.log(error);
+      Toast.show({ type: 'error', text1: 'Failed to add product' });
+    }
+  };
+
+  const handleToggleFavourite = async (meal: Meal) => {
+    try {
+      const updatedMeals = meals.map(
+        m => m.id === meal.id ? {...m, is_favourite: !m.is_favourite } : m);
+      setMeals(updatedMeals);
+
+      await fridgeMealsService.updateMeal(meal.id, {is_favourite: !meal.is_favourite})
+    } catch (error) {
+      console.error(error);
+      setMeals(meals);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to update meal'
+      })
+    }
+  }
 
 
   return (
@@ -65,7 +109,7 @@ const FridgeMealsScreen = () => {
         </View>
       ) : (
         <FlatList
-          data={meals}
+          data={filteredMeals}
           keyExtractor={(item) => item.id.toString()}
           className="mt-2"
           contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
@@ -85,17 +129,24 @@ const FridgeMealsScreen = () => {
               carbs={item.carbs}
               productsCount={item.products_count}
               isFavourite={item.is_favourite}
-              onToggleFavourite={() =>
-                console.log("Clicked heart icon ID:", item.id)
-              }
+              onToggleFavourite={() =>  handleToggleFavourite(item)}
               onPress={() => console.log("Open meal details ID:", item.id)}
             />
           )}
         />
       )}
-      <Pressable className="absolute bottom-8 right-8 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg shadow-black/30 elevation-5 active:scale-95 transition-transform">
+
+      <Pressable
+        onPress={() => setIsAddMealModalVisible(true)}
+        className="absolute bottom-8 right-8 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg shadow-black/30 elevation-5 active:scale-95 transition-transform">
         <Ionicons name="add" size={32} color="white" />
       </Pressable>
+
+      <AddMealModal
+        isVisible={isAddMealModalVisible}
+        onClose={() => setIsAddMealModalVisible(false)}
+        onSubmit={handleAddMeal}
+      />
     </View>
   );
 };

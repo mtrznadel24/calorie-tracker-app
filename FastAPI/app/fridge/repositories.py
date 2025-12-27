@@ -1,6 +1,7 @@
 from collections.abc import Sequence
+from typing import Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, Row
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -83,13 +84,47 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
         result = await self.db.execute(stmt)
         return result.all()
 
-    async def get_fridge_meal(self, fridge_id: int, meal_id: int) -> FridgeMeal:
-        result = await self.db.execute(
-            select(FridgeMeal).where(
-                FridgeMeal.id == meal_id, FridgeMeal.fridge_id == fridge_id
-            )
+    async def get_fridge_meal_orm(self, fridge_id: int, meal_id: int) -> FridgeMeal:
+        stmt = select(FridgeMeal).where(
+            FridgeMeal.fridge_id == fridge_id,
+            FridgeMeal.id == meal_id
         )
+        result = await self.db.execute(stmt)
         meal = result.scalar_one_or_none()
+
+        if meal is None:
+            raise NotFoundError("Meal not found")
+        return meal
+
+    async def get_fridge_meal(self, fridge_id: int, meal_id: int) -> Row:
+        def calc_macro(column_name):
+            return func.coalesce(
+                func.sum(
+                    (getattr(FridgeProduct, column_name) * FridgeMealIngredient.weight) / 100
+                ),
+                0
+            )
+
+        stmt = (
+            select(
+                FridgeMeal.id,
+                FridgeMeal.name,
+                FridgeMeal.is_favourite,
+                calc_macro("calories_100g").label("calories"),
+                calc_macro("proteins_100g").label("proteins"),
+                calc_macro("fats_100g").label("fats"),
+                calc_macro("carbs_100g").label("carbs"),
+                func.count(FridgeMealIngredient.id).label("products_count")
+            )
+            .select_from(FridgeMeal)
+            .outerjoin(FridgeMealIngredient, FridgeMeal.id == FridgeMealIngredient.fridge_meal_id)
+            .outerjoin(FridgeProduct, FridgeMealIngredient.fridge_product_id == FridgeProduct.id)
+            .where(FridgeMeal.fridge_id == fridge_id, FridgeMeal.id == meal_id)
+            .group_by(FridgeMeal.id)
+        )
+
+        result = await self.db.execute(stmt)
+        meal = result.first()
         if meal is None:
             raise NotFoundError("Meal not found")
         return meal

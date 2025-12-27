@@ -24,7 +24,7 @@ export interface UpdateMealData {
 
 const fridgeMealsService = {
   addMeal: async (data: AddMealData) => {
-    const response = await api.post('/fridge/meals');
+    const response = await api.post('/fridge/meals', data);
     return response.data;
   },
   getMeals: async () => {

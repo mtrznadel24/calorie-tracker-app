@@ -71,7 +71,7 @@ async def delete_fridge_product(
 @router.post("/meals", response_model=FridgeMealRead)
 async def add_fridge_meal(
     fridge_service: FridgeServiceDep, fridge: FridgeDep, meal_in: FridgeMealCreate
-) -> FridgeMeal:
+):
     return await fridge_service.create_fridge_meal(fridge.id, meal_in)
 
 
@@ -86,7 +86,7 @@ async def read_fridge_meals(
 @router.get("/meals/{meal_id}", response_model=FridgeMealRead)
 async def read_fridge_meal(
     fridge_service: FridgeServiceDep, fridge: FridgeDep, meal_id: int
-) -> FridgeMeal:
+):
     return await fridge_service.get_fridge_meal(fridge.id, meal_id)
 
 
@@ -96,7 +96,7 @@ async def update_fridge_meal(
     fridge: FridgeDep,
     meal_id: int,
     meal_in: FridgeMealUpdate,
-) -> FridgeMeal:
+):
     return await fridge_service.update_fridge_meal(fridge.id, meal_id, meal_in)
 
 

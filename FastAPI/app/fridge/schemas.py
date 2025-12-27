@@ -58,7 +58,7 @@ class FridgeMealRead(BaseModel):
 
 
 class FridgeMealUpdate(BaseModel):
-    name: str | None = Field(pattern=r"^[a-zA-Z0-9\s\-.]+$")
+    name: str | None = Field(default=None, pattern=r"^[a-zA-Z0-9\s\-.]+$")
     is_favourite: bool | None = None
 
 

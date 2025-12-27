@@ -1,6 +1,8 @@
 import logging
 from collections.abc import Sequence
+from typing import Optional
 
+from sqlalchemy import Row
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +19,7 @@ from app.fridge.schemas import (
     FridgeMealIngredientUpdate,
     FridgeMealUpdate,
     FridgeProductCreate,
-    FridgeProductUpdate,
+    FridgeProductUpdate, FridgeMealRead,
 )
 from app.utils.enums import NutrientType
 
@@ -79,7 +81,7 @@ class FridgeService:
 
     async def create_fridge_meal(
         self, fridge_id: int, data: FridgeMealCreate
-    ) -> FridgeMeal:
+    ) -> Row:
         meal = FridgeMeal(**data.model_dump(exclude_unset=True), fridge_id=fridge_id)
         self.meal_repo.add(meal)
         try:
@@ -89,7 +91,9 @@ class FridgeService:
                 f"Duplicate meal attempt: name='{data.name}', fridge_id={fridge_id}"
             )
             raise ConflictError("Meal already exists") from None
-        return await self.meal_repo.refresh_and_return(meal)
+        await self.meal_repo.refresh(meal)
+
+        return await self.get_fridge_meal(fridge_id, meal.id)
 
     async def get_fridge_meals(
         self,
@@ -99,20 +103,20 @@ class FridgeService:
             fridge_id
         )
 
-    async def get_fridge_meal(self, fridge_id: int, meal_id: int) -> FridgeMeal:
+    async def get_fridge_meal(self, fridge_id: int, meal_id: int) -> Row:
         return await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
 
     async def update_fridge_meal(
         self, fridge_id: int, meal_id: int, data: FridgeMealUpdate
-    ) -> FridgeMeal:
-        meal = await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
+    ) -> Row:
+        meal = await self.meal_repo.get_fridge_meal_orm(fridge_id, meal_id)
         for field, value in data.model_dump(exclude_unset=True).items():
             setattr(meal, field, value)
         try:
             await self.meal_repo.commit_or_conflict()
         except IntegrityError:
             raise ConflictError("Meal already exists") from None
-        return await self.meal_repo.refresh_and_return(meal)
+        return await self.get_fridge_meal(fridge_id, meal_id)
 
     async def delete_fridge_meal(self, fridge_id: int, meal_id: int) -> FridgeMeal:
         return await self.meal_repo.delete_fridge_meal(fridge_id, meal_id)
