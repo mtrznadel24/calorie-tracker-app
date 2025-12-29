@@ -3,9 +3,15 @@ import MealCard from "@/components/fridge/MealCard";
 import React, {useEffect, useMemo, useState} from "react";
 import {ActivityIndicator, FlatList, Pressable, Text, View} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import fridgeMealsService, {AddMealData, Meal} from "@/services/fridgeMealsService";
+import fridgeMealsService, {
+  AddMealData,
+  IngredientDisplayItem,
+  Meal,
+  UpdateMealData
+} from "@/services/fridgeMealsService";
 import Toast from "react-native-toast-message";
 import AddMealModal from "@/components/fridge/AddMealModal";
+import EditMealModal from "@/components/fridge/EditMealModal";
 import fridgeProductsService, {Product} from "@/services/fridgeProductsService";
 
 const FridgeMealsScreen = () => {
@@ -14,6 +20,8 @@ const FridgeMealsScreen = () => {
   const [meals, setMeals] = useState<Meal[]>([])
   const [isFetching, setIsFetching] = useState(true);
   const [isAddMealModalVisible, setIsAddMealModalVisible] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+  const [isEditMealModalVisible, setIsEditMealModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,7 +53,7 @@ const FridgeMealsScreen = () => {
 
   const handleAddMeal = async (newMealData: AddMealData) => {
     try {
-      const newMeal = await fridgeMealsService.addMeal(newMealData);
+      const newMeal = await fridgeMealsService.addMealWithIngredients(newMealData);
 
       setMeals(prevMeals => [...prevMeals, newMeal]);
 
@@ -61,17 +69,64 @@ const FridgeMealsScreen = () => {
 
   const handleToggleFavourite = async (meal: Meal) => {
     try {
+      await fridgeMealsService.updateMeal(meal.id, {is_favourite: !meal.is_favourite})
       const updatedMeals = meals.map(
         m => m.id === meal.id ? {...m, is_favourite: !m.is_favourite } : m);
       setMeals(updatedMeals);
 
-      await fridgeMealsService.updateMeal(meal.id, {is_favourite: !meal.is_favourite})
     } catch (error) {
       console.error(error);
       setMeals(meals);
       Toast.show({
         type: 'error',
         text1: 'Failed to update meal'
+      })
+    }
+  }
+
+  const handleEditMeal = async (data: UpdateMealData) => {
+    if (selectedMeal === null) { return;}
+    try {
+      const newMeal = await fridgeMealsService.updateMeal(selectedMeal.id, {name: data.name});
+      const updateMeals = meals.map(
+        m => m.id === selectedMeal.id ? newMeal : m);
+      setMeals(updateMeals);
+      setSelectedMeal(null);
+    } catch (error) {
+      console.error(error);
+      setMeals(meals);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to update meal'
+      })
+    }
+  }
+
+  const handleEditMealModalClose = async (shouldRefresh?: boolean)=> {
+    setIsEditMealModalVisible(false)
+    if (shouldRefresh && selectedMeal) {
+      const updatedMeal = await fridgeMealsService.getMealById(selectedMeal.id);
+
+      setMeals((prevMeals) =>
+        prevMeals.map((m) => m.id === updatedMeal.id ? updatedMeal : m)
+      );
+    }
+  }
+
+  const handleDeleteMeal = async (meal: Meal) => {
+    try {
+      const response = await fridgeMealsService.deleteMeal(meal.id);
+      setMeals( (prevMeals) => prevMeals.filter((m) => m.id !== meal.id));
+      Toast.show({
+        type: 'success',
+        text1: `${response.name} deleted successfully`,
+      })
+
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'Failed to delete meal',
       })
     }
   }
@@ -130,7 +185,10 @@ const FridgeMealsScreen = () => {
               productsCount={item.products_count}
               isFavourite={item.is_favourite}
               onToggleFavourite={() =>  handleToggleFavourite(item)}
-              onPress={() => console.log("Open meal details ID:", item.id)}
+              onPress={() => {
+                setIsEditMealModalVisible(true);
+                setSelectedMeal(item)
+              }}
             />
           )}
         />
@@ -142,6 +200,13 @@ const FridgeMealsScreen = () => {
         <Ionicons name="add" size={32} color="white" />
       </Pressable>
 
+      <EditMealModal
+        isVisible={isEditMealModalVisible}
+        onClose={handleEditMealModalClose}
+        onSubmit={handleEditMeal}
+        onDelete={handleDeleteMeal}
+        meal={selectedMeal}
+      />
       <AddMealModal
         isVisible={isAddMealModalVisible}
         onClose={() => setIsAddMealModalVisible(false)}

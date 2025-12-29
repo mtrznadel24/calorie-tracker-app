@@ -1,13 +1,14 @@
-import fridgeProductsService, {AddProductData, Product} from "@/services/fridgeProductsService";
 import fridgeMealsService, {
   AddIngredientData,
   AddMealData,
   Ingredient,
-  IngredientDisplayItem
+  IngredientDisplayItem,
+  Meal, UpdateMealData
 } from "@/services/fridgeMealsService";
 import React, {useEffect, useState} from "react";
+import {Product} from "@/services/fridgeProductsService";
 import {
-  ActivityIndicator, FlatList,
+  ActivityIndicator, Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -20,42 +21,55 @@ import {
 import clsx from "clsx";
 import {Ionicons} from "@expo/vector-icons";
 import AddIngredientModal from "@/components/fridge/AddIngredientModal";
-import AddProductModal from "@/components/fridge/AddProductModal";
+import FridgeMealsService from "@/services/fridgeMealsService";
 import Toast from "react-native-toast-message";
 
-
-interface AddMealModalProps {
+interface EditMealModalProps {
   isVisible: boolean;
-  onClose: () => void;
-  onSubmit: (data: AddMealData) => Promise<void>;
+  onClose: (shouldRefresh?: boolean) => void;
+  onSubmit: (data: UpdateMealData) => Promise<void>;
+  onDelete: (meal: Meal) => void;
+  meal: Meal | null;
 }
 
-
-const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
+const EditMealModal = ({isVisible, onClose, onSubmit, onDelete, meal}: EditMealModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
-  const [isFavourite, setIsFavourite] = useState(false);
   const [ingredients, setIngredients] = useState<IngredientDisplayItem[]>([]);
   const [isAddIngredientModalOpen, setIsAddIngredientModalOpen] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      try {
+        if (!meal) return;
+        setName(meal.name);
+        const products = await fridgeMealsService.getMealIngredients(meal.id);
+        console.log("works yet products", products);
+        setIngredients(products);
+        setHasChanges(false)
+      } catch (error) {
+
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchProducts();
+  }, [meal, isVisible]);
 
   const handleSubmit = async () => {
     if (!name) return;
     setIsLoading(true);
     try {
-      const IngredientsPayload: Ingredient[] = ingredients.map(item => ({
-        weight: item.weight,
-        fridge_product_id: item.fridge_product_id
-      }));
 
-      const payload: AddMealData = {
+      const payload: UpdateMealData = {
         name: name,
-        is_favourite: isFavourite,
-        ingredients: IngredientsPayload
       }
       await onSubmit(payload);
       resetForm();
       setIngredients([])
-      onClose();
+      onClose(true);
     } catch (error) {
       console.error(error);
       resetForm();
@@ -67,27 +81,87 @@ const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
 
   const resetForm = () => {
     setName("");
-    setIsFavourite(false);
   };
 
-  const handleRemoveIngredient = (id?: string) => {
-    if (id === null) return;
-    setIngredients(prev => prev.filter(item => item.tempId !== id));
+  const handleClose = () => {
+    onClose(hasChanges);
+  };
+
+  const handleRemoveIngredient = async (ingredient: IngredientDisplayItem) => {
+    if (meal === null) {
+      return;
+    }
+    if (!ingredient.id) return;
+    try {
+      await fridgeMealsService.deleteMealIngredient(meal.id, ingredient.id)
+      setIngredients(prev => prev.filter(item => item.id !== ingredient.id));
+      setHasChanges(true);
+      Toast.show({
+        type: 'success',
+        text1: 'Ingredient deleted successfully',
+      });
+    } catch (error) {
+      console.log(error);
+      Toast.show({
+        type: 'error',
+        text1: 'removing ingredient failed',
+        });
+    }
   }
 
   const handleAddIngredient = async (product: Product, data: AddIngredientData) => {
-    const calculatedCalories = (product.calories_100g * data.weight) / 100;
+    if (meal === null) { return; }
+    try {
+      const ingredient = await FridgeMealsService.addFridgeMealIngredient(meal.id, data)
 
-    const newItem: IngredientDisplayItem = {
-      tempId: Math.random().toString(),
-      fridge_product_id: data.fridge_product_id,
-      weight: data.weight,
-      product_name: product.product_name,
-      calories: calculatedCalories
-    };
-
-    setIngredients(prevIngredients => [...prevIngredients, newItem])
+      setIngredients(prevIngredients => [...prevIngredients, ingredient])
+      setHasChanges(true);
+      Toast.show({
+        type: 'success',
+        text1: 'Ingredient added successfully',
+      });
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: 'adding ingredient failed',
+      });
+    }
   }
+
+  const handleDeletePress = () => {
+    Alert.alert(
+      "Delete Product",
+      "Are you sure you want to remove this product from your fridge?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: handleDelete
+        }
+      ]
+    );
+  };
+
+  const handleDelete = async () => {
+    if (!meal) return;
+
+    setIsLoading(true);
+    try {
+      await onDelete(meal);
+      onClose();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
 
   return (
     <Modal
@@ -95,12 +169,12 @@ const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
       presentationStyle={Platform.OS === 'ios' ? 'pageSheet' : 'overFullScreen'}
       transparent={Platform.OS !== 'ios'}
       visible={isVisible}
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View className="flex-1 justify-end bg-black/50">
 
         {Platform.OS !== 'ios' && (
-             <Pressable className="absolute inset-0" onPress={onClose} />
+             <Pressable className="absolute inset-0" onPress={handleClose} />
         )}
 
         <View className={clsx(
@@ -119,28 +193,8 @@ const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
 
               <View className="flex-row justify-between items-center w-full px-6">
                 <Text className="text-2xl font-bold text-dark-900 dark:text-text-light">
-                  Add Meal
+                  Edit Meal
                 </Text>
-
-                <View className="flex-row gap-3">
-                   <Pressable
-                      onPress={() => setIsFavourite(!isFavourite)}
-                      className={clsx(
-                          "p-2 rounded-full border",
-                          isFavourite ? "bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900" : "bg-light-200 border-light-200 dark:bg-dark-800 dark:border-dark-700"
-                      )}
-                   >
-                      <Ionicons
-                          name={isFavourite ? "heart" : "heart-outline"}
-                          size={24}
-                          color={isFavourite ? "#EF4444" : "gray"}
-                      />
-                   </Pressable>
-
-                   <Pressable onPress={onClose} className="p-2 bg-light-200 dark:bg-dark-800 rounded-full">
-                      <Ionicons name="close" size={24} color="gray" />
-                   </Pressable>
-                </View>
               </View>
             </View>
 
@@ -175,7 +229,7 @@ const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
                 ) : (
                     ingredients.map((item) => (
                         <View
-                            key={item.tempId}
+                            key={item.id}
                             className="flex-row items-center justify-between p-3 bg-light-50 dark:bg-dark-800 rounded-xl border border-light-200 dark:border-dark-700"
                         >
                             <View className="flex-1">
@@ -188,7 +242,7 @@ const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
                             </View>
 
                             <Pressable
-                                onPress={() => handleRemoveIngredient(item.tempId)}
+                                onPress={() => handleRemoveIngredient(item)}
                                 className="p-2"
                             >
                                 <Ionicons name="trash-outline" size={20} color="#EF4444" />
@@ -201,7 +255,7 @@ const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
             </ScrollView>
 
             {/* FOOTER BUTTON */}
-            <View className="p-6 border-t border-light-200 dark:border-dark-700 bg-white dark:bg-dark-900 absolute bottom-0 w-full pb-10">
+            <View className="p-6 border-t border-light-200 dark:border-dark-700 bg-white dark:bg-dark-900 absolute bottom-0 w-full pb-10 gap-3">
               <Pressable
                   onPress={handleSubmit}
                   disabled={isLoading || !name}
@@ -210,9 +264,19 @@ const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
                       (!name) ? "bg-gray-300 dark:bg-dark-700" : "bg-primary"
                   )}
               >
-                  {isLoading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">Add to Fridge</Text>}
+                  {isLoading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">Update Name</Text>}
               </Pressable>
+
+              <Pressable
+                  onPress={handleDeletePress}
+                  disabled={isLoading}
+                  className="p-4 rounded-xl items-center border border-red-500 bg-transparent active:bg-red-50 dark:active:bg-red-900/20"
+              >
+                  <Text className="text-red-500 font-bold text-lg">Delete Product</Text>
+              </Pressable>
+
             </View>
+
             <AddIngredientModal
               isVisible={isAddIngredientModalOpen}
               onClose={() => setIsAddIngredientModalOpen(false)}
@@ -224,6 +288,6 @@ const AddMealModal = ({isVisible, onClose, onSubmit}: AddMealModalProps) => {
       </View>
     </Modal>
   );
-};
+}
 
-export default AddMealModal;
+export default EditMealModal;

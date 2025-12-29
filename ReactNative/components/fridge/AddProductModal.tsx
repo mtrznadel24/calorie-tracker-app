@@ -233,7 +233,6 @@ const AddProductModal = ({ isVisible, onClose, onSubmit }: AddProductModalProps)
                   {isLoading ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold text-lg">Add to Fridge</Text>}
               </Pressable>
             </View>
-
           </KeyboardAvoidingView>
         </View>
       </View>

@@ -1,6 +1,5 @@
 import logging
 from collections.abc import Sequence
-from typing import Optional
 
 from sqlalchemy import Row
 from sqlalchemy.exc import IntegrityError
@@ -18,8 +17,9 @@ from app.fridge.schemas import (
     FridgeMealIngredientCreate,
     FridgeMealIngredientUpdate,
     FridgeMealUpdate,
+    FridgeMealWithIngredientsCreate,
     FridgeProductCreate,
-    FridgeProductUpdate, FridgeMealRead,
+    FridgeProductUpdate,
 )
 from app.utils.enums import NutrientType
 
@@ -79,9 +79,7 @@ class FridgeService:
 
     # Fridge meals
 
-    async def create_fridge_meal(
-        self, fridge_id: int, data: FridgeMealCreate
-    ) -> Row:
+    async def create_fridge_meal(self, fridge_id: int, data: FridgeMealCreate) -> Row:
         meal = FridgeMeal(**data.model_dump(exclude_unset=True), fridge_id=fridge_id)
         self.meal_repo.add(meal)
         try:
@@ -95,13 +93,33 @@ class FridgeService:
 
         return await self.get_fridge_meal(fridge_id, meal.id)
 
-    async def get_fridge_meals(
-        self,
-        fridge_id: int
-    ) -> Sequence[FridgeMeal]:
-        return await self.meal_repo.get_fridge_meal_list(
-            fridge_id
+    async def create_fridge_meal_with_ingredients(
+        self, fridge_id: int, data: FridgeMealWithIngredientsCreate
+    ) -> Row:
+        meal = FridgeMeal(
+            name=data.name, is_favourite=data.is_favourite, fridge_id=fridge_id
         )
+        for ingredient in data.ingredients:
+            meal.ingredients.append(
+                FridgeMealIngredient(
+                    weight=ingredient.weight,
+                    fridge_product_id=ingredient.fridge_product_id,
+                )
+            )
+        self.meal_repo.add(meal)
+        try:
+            await self.meal_repo.commit_or_conflict()
+        except IntegrityError:
+            logger.warning(
+                f"Duplicate meal attempt: name='{data.name}', fridge_id={fridge_id}"
+            )
+            raise ConflictError("Meal already exists") from None
+        await self.meal_repo.refresh(meal)
+
+        return await self.get_fridge_meal(fridge_id, meal.id)
+
+    async def get_fridge_meals(self, fridge_id: int) -> Sequence[FridgeMeal]:
+        return await self.meal_repo.get_fridge_meal_list(fridge_id)
 
     async def get_fridge_meal(self, fridge_id: int, meal_id: int) -> Row:
         return await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
@@ -109,7 +127,7 @@ class FridgeService:
     async def update_fridge_meal(
         self, fridge_id: int, meal_id: int, data: FridgeMealUpdate
     ) -> Row:
-        meal = await self.meal_repo.get_fridge_meal_orm(fridge_id, meal_id)
+        meal = await self.meal_repo.get_fridge_meal_entity(fridge_id, meal_id)
         for field, value in data.model_dump(exclude_unset=True).items():
             setattr(meal, field, value)
         try:
@@ -139,23 +157,26 @@ class FridgeService:
 
     async def add_fridge_meal_ingredient(
         self, fridge_id: int, meal_id: int, data: FridgeMealIngredientCreate
-    ) -> FridgeMealIngredient:
+    ):
         await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
         ingredient = FridgeMealIngredient(**data.model_dump(), fridge_meal_id=meal_id)
         try:
-            return await self.meal_repo.add_meal_ingredient(ingredient)
+            ingredient = await self.meal_repo.add_meal_ingredient(ingredient)
+            return await self.meal_repo.get_fridge_meal_ingredient(
+                fridge_id, meal_id, ingredient.id
+            )
         except IntegrityError:
             raise ConflictError("Ingredient already exists") from None
 
     async def get_fridge_meal_ingredients(
         self, fridge_id: int, meal_id: int
-    ) -> Sequence[FridgeMealIngredient]:
+    ) -> Sequence[Row]:
         await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
         return await self.meal_repo.get_fridge_meal_ingredients(fridge_id, meal_id)
 
     async def get_fridge_meal_ingredient(
         self, fridge_id: int, meal_id: int, ingredient_id: int
-    ) -> FridgeMealIngredient:
+    ):
         return await self.meal_repo.get_fridge_meal_ingredient(
             fridge_id, meal_id, ingredient_id
         )
@@ -168,7 +189,7 @@ class FridgeService:
         data: FridgeMealIngredientUpdate,
     ) -> FridgeMealIngredient:
         await self.meal_repo.get_fridge_meal(fridge_id, meal_id)
-        ingredient = await self.meal_repo.get_fridge_meal_ingredient(
+        ingredient = await self.meal_repo.get_fridge_meal_ingredient_entity(
             fridge_id, meal_id, ingredient_id
         )
         for field, value in data.model_dump(exclude_unset=True).items():

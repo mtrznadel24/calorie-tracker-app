@@ -3,10 +3,10 @@ import pytest
 from app.core.exceptions import ConflictError, NotFoundError
 from app.fridge.models import FoodCategory
 from app.fridge.schemas import (
-    FridgeMealCreate,
     FridgeMealIngredientCreate,
     FridgeMealIngredientUpdate,
     FridgeMealUpdate,
+    FridgeMealWithIngredientsCreate,
     FridgeProductCreate,
     FridgeProductUpdate,
 )
@@ -85,18 +85,21 @@ class TestFridgeService:
         assert result.id == sample_fridge_product.id
 
     async def test_create_fridge_meal_success(self, fridge_service, fridge):
-        data = FridgeMealCreate(name="Pasta", is_favourite=True)
+        data = FridgeMealWithIngredientsCreate(
+            name="Pasta", is_favourite=True, ingredients=[]
+        )
 
         result = await fridge_service.create_fridge_meal(fridge.id, data)
 
         assert result.name == "Pasta"
-        assert result.fridge_id == fridge.id
         assert result.is_favourite is True
 
     async def test_create_fridge_meal_conflict(
         self, fridge_service, fridge, sample_fridge_meal
     ):
-        data = FridgeMealCreate(name="toast", is_favourite=False)
+        data = FridgeMealWithIngredientsCreate(
+            name="toast", is_favourite=True, ingredients=[]
+        )
 
         with pytest.raises(ConflictError):
             await fridge_service.create_fridge_meal(fridge.id, data)
@@ -162,7 +165,6 @@ class TestFridgeService:
         )
 
         assert result.weight == 50
-        assert result.fridge_meal_id == sample_fridge_meal.id
         assert result.fridge_product_id == sample_fridge_product.id
 
     async def test_update_fridge_meal_ingredient_success(
@@ -184,7 +186,6 @@ class TestFridgeService:
         )
 
         assert result.weight == 50
-        assert result.fridge_meal_id == sample_fridge_meal.id
         assert result.fridge_product_id == sample_fridge_product.id
 
     async def test_delete_fridge_meal_ingredient_success(

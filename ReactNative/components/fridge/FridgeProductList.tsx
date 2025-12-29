@@ -1,12 +1,12 @@
-import {View, Text, Pressable, FlatList, ActivityIndicator} from "react-native";
+import fridgeProductsService, {AddProductData, Product} from "@/services/fridgeProductsService";
 import React, {useEffect, useMemo, useState} from "react";
-import SearchBar from "@/components/SearchBar";
-import { Ionicons } from "@expo/vector-icons";
-import ProductCard from "@/components/fridge/ProductCard";
-import fridgeProductsService, {AddProductData, Product, UpdateProductData} from "@/services/fridgeProductsService";
 import Toast from "react-native-toast-message";
+import {ActivityIndicator, FlatList, Pressable, Text, View} from "react-native";
+import SearchBar from "@/components/SearchBar";
+import {Ionicons} from "@expo/vector-icons";
+import ProductCard from "@/components/fridge/ProductCard";
 import AddProductModal from "@/components/fridge/AddProductModal";
-import EditProductModal from "@/components/fridge/EditProductModal";
+
 
 const CATEGORIES = [
   "All",
@@ -21,15 +21,19 @@ const CATEGORIES = [
   "drinks",
 ];
 
-const FridgeProductsScreen = () => {
+interface FridgeProductListProps {
+  onProductPress: (product: Product) => void;
+  onAddButtonPress: (product: Product) => void;
+  onToggleFavourite?: (product: Product) => void;
+}
+
+const FridgeProductList = ({onProductPress, onAddButtonPress, onToggleFavourite}: FridgeProductListProps) => {
   const [searchText, setSearchText] = useState("");
   const [showFavourites, setShowFavourites] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [products, setProducts] = useState<Product[]>([]);
   const [isFetching, setIsFetching] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isProductModalVisible, setIsProductModalVisible] = useState(false);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,75 +64,33 @@ const FridgeProductsScreen = () => {
     })
   }, [products, searchText, selectedCategory, showFavourites]);
 
+  const handleToggleFavourite = async (product: Product) => {
+    if (!onToggleFavourite) return;
+
+    const updatedProducts = products.map(
+        p => p.id === product.id ? {...p, is_favourite: !p.is_favourite } : p);
+    setProducts(updatedProducts);
+
+    onToggleFavourite(product);
+  };
+
   const handleAddProduct = async (newProductData: AddProductData) => {
     try {
-      await fridgeProductsService.addProduct(newProductData);
-
-      const updatedList = await fridgeProductsService.getProducts();
-      setProducts(updatedList);
+      const newProduct = await fridgeProductsService.addProduct(newProductData);
+      setProducts(prev => [...prev, newProduct])
+      setIsAddProductModalOpen(false);
 
       Toast.show({
         type: 'success',
         text1: 'Product added!'
       });
+
+      onAddButtonPress(newProduct)
     } catch (error) {
       console.log(error);
       Toast.show({ type: 'error', text1: 'Failed to add product' });
     }
   };
-
-  const handleToggleFavourite = async (product: Product) => {
-    try {
-      const updatedProducts = products.map(
-        p => p.id === product.id ? {...p, is_favourite: !p.is_favourite } : p);
-      setProducts(updatedProducts);
-
-      await fridgeProductsService.updateProduct(product.id, {is_favourite: !product.is_favourite})
-    } catch (error) {
-      console.error(error);
-      setProducts(products);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to update product'
-      })
-    }
-  }
-
-  const handleUpdateProduct = async (product: Product, data: UpdateProductData) => {
-    try {
-      const response = await fridgeProductsService.updateProduct(product.id, data);
-
-      const updatedProducts = products.map(
-        p => p.id === product.id ? {...p, ...response} : p
-      );
-      setProducts(updatedProducts);
-      Toast.show({
-        type: 'success',
-        text1: 'Product updated!'
-      });
-
-    } catch (error) {
-      console.error(error);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to update product',
-      })
-    }
-  }
-
-  const handleDeleteProduct = async (product: Product) => {
-    try {
-      await fridgeProductsService.deleteProduct(product.id);
-      setProducts( (prevProducts) => prevProducts.filter((p) => p.id !== product.id));
-
-    } catch (error) {
-      console.error(error);
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to delete product',
-      })
-    }
-  }
 
   return (
     <View className="flex-1 bg-light-100 dark:bg-dark-800 relative">
@@ -216,39 +178,26 @@ const FridgeProductsScreen = () => {
                 fats={item.fats_100g}
                 carbs={item.carbs_100g}
                 isFavourite={item.is_favourite}
-                onToggleFavourite={() => handleToggleFavourite(item)}
-                onPress={() => {
-                  setIsProductModalVisible(true)
-                  setSelectedProduct(item)
-                  }
-                }
+                onToggleFavourite={onToggleFavourite ? () => handleToggleFavourite(item) : undefined}
+                onPress={() => onProductPress(item)}
             />
             )}
         />
       )}
 
       <Pressable
-        onPress={() => setIsModalVisible(true)}
+        onPress={() => setIsAddProductModalOpen(true)}
         className="absolute bottom-8 right-8 w-16 h-16 bg-primary rounded-full items-center justify-center shadow-lg shadow-black/30 elevation-5 active:scale-95 transition-transform"
       >
         <Ionicons name="add" size={32} color="white" />
       </Pressable>
-
-      <EditProductModal
-        isVisible={isProductModalVisible}
-        onClose={() => setIsProductModalVisible(false)}
-        onSubmit={handleUpdateProduct}
-        onDelete={handleDeleteProduct}
-        product={selectedProduct}
-      />
-
       <AddProductModal
-        isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
+        isVisible={isAddProductModalOpen}
+        onClose={() => setIsAddProductModalOpen(false)}
         onSubmit={handleAddProduct}
       />
     </View>
-  );
-};
+  )
+}
 
-export default FridgeProductsScreen;
+export default FridgeProductList;
