@@ -6,7 +6,7 @@ class TestFridgeMealEndpoints:
     # --- POST /fridge/meals ---
 
     async def test_add_fridge_meal_success(self, client_with_fridge):
-        payload = {"name": "Toast", "is_favourite": True}
+        payload = {"name": "Toast", "is_favourite": True, "ingredients": []}
         response = await client_with_fridge.post("/fridge/meals", json=payload)
         assert response.status_code == 200
         data = response.json()
@@ -14,12 +14,12 @@ class TestFridgeMealEndpoints:
         assert data["is_favourite"] is True
 
     async def test_add_fridge_meal_no_auth(self, client_no_user):
-        payload = {"name": "Toast", "is_favourite": True}
+        payload = {"name": "Toast", "is_favourite": True, "ingredients": []}
         response = await client_no_user.post("/fridge/meals", json=payload)
         assert response.status_code == 401
 
     async def test_add_fridge_meal_wrong_data(self, client_with_fridge):
-        payload = {"name": ""}
+        payload = {"name": "", "ingredients": []}
         response = await client_with_fridge.post("/fridge/meals", json=payload)
         assert response.status_code == 422
 
