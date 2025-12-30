@@ -20,6 +20,19 @@ class MealRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MealLogRead(BaseModel):
+    id: int
+    name: str
+    type: MealType
+    weight: float
+    calories: float
+    proteins: float
+    fats: float
+
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # Meal Ingredient Details
 
 

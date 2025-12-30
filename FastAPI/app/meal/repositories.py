@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.base_repository import BaseRepository, UserScopedRepository
@@ -13,6 +13,23 @@ from app.utils.enums import NutrientType, nutrient_type_list
 class MealRepository(UserScopedRepository[Meal]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, Meal)
+
+    async def get_meal_logs(self, user_id: int, meal_date: date):
+        stmt = (select(MealIngredient.id,
+                       MealIngredientDetails.product_name.label("name"),
+                       Meal.type,
+                       MealIngredient.weight,
+                       (MealIngredientDetails.calories_100g * MealIngredient.weight / literal(100)).label("calories"),
+                       (MealIngredientDetails.proteins_100g * MealIngredient.weight / literal(100)).label("proteins"),
+                       (MealIngredientDetails.fats_100g * MealIngredient.weight / literal(100)).label("fats"),
+                       (MealIngredientDetails.carbs_100g * MealIngredient.weight / literal(100)).label("carbs")
+                       )
+                .select_from(MealIngredient)
+                .join(Meal, MealIngredient.meal_id == Meal.id)
+                .join(MealIngredientDetails)
+                .where(Meal.user_id == user_id, Meal.date == meal_date)
+                )
+
 
     async def get_meal_by_date_and_type(
         self, user_id: int, date: date, type: MealType

@@ -1,3 +1,4 @@
+import datetime
 from collections.abc import Sequence
 from datetime import date
 
@@ -12,7 +13,7 @@ from app.meal.schemas import (
     MealCreate,
     MealIngredientCreate,
     MealIngredientUpdate,
-    WeightRequest,
+    WeightRequest, MealLogRead,
 )
 from app.utils.enums import NutrientType
 
@@ -52,6 +53,9 @@ class MealService:
 
     async def get_meal_by_id(self, user_id: int, meal_id: int) -> Meal:
         return await self.repo.get_by_id_for_user(user_id, meal_id)
+
+    async def get_meal_logs(self, user_id: int, meal_date: datetime.date) -> Sequence[MealLogRead]:
+        return await self.repo.get_meal_logs(user_id, meal_date)
 
     async def delete_meal(self, user_id: int, meal_id: int) -> Meal:
         return await self.repo.delete_by_id_for_user(user_id, meal_id)

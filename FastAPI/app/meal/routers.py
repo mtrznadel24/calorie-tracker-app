@@ -13,7 +13,7 @@ from app.meal.schemas import (
     MealIngredientRead,
     MealIngredientUpdate,
     MealRead,
-    WeightRequest,
+    WeightRequest, MealLogRead,
 )
 from app.utils.enums import NutrientType
 
@@ -42,6 +42,11 @@ async def read_meal_by_id(
 ) -> Meal:
     return await meal_service.get_meal_by_id(user.id, meal_id=meal_id)
 
+@router.get("/{meal_date}/meal-logs", response_model=Sequence[MealLogRead])
+async def read_meal_logs(
+        meal_service: MealServiceDep, user: UserDep, meal_date: date
+):
+    return await meal_service.get_meal_logs(user.id, meal_date=meal_date)
 
 @router.delete("/{meal_id}", response_model=MealRead)
 async def delete_meal(
