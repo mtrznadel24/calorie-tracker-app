@@ -45,7 +45,9 @@ class User(Base):
         cascade="all, delete-orphan",
         lazy="joined",
     )
-    meals = relationship("Meal", back_populates="user", cascade="all, delete-orphan")
+    meal_logs = relationship(
+        "MealLog", back_populates="user", cascade="all, delete-orphan"
+    )
     weights = relationship(
         "Weight", back_populates="user", cascade="all, delete-orphan"
     )

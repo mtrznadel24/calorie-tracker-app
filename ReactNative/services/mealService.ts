@@ -12,7 +12,37 @@ export interface MealLog{
   weight: number;
 }
 
-const formatDateForApi = (date: Date): string => {
+export interface AddMealLogData {
+  name: string;
+  type: string;
+  calories: number;
+  proteins: number;
+  fats: number;
+  carbs: number;
+  weight: number;
+}
+
+export interface SimpleProductData {
+  name: string;
+  weight: number;
+  calories_100g: number;
+  proteins_100g: number;
+  fats_100g: number;
+  carbs_100g: number;
+}
+
+export interface QuickAddLogData {
+  name: string;
+  date: string;
+  type: string;
+  calories: number;
+  proteins: number;
+  fats: number;
+  carbs: number;
+  weight: number;
+}
+
+export const formatDateForApi = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -20,6 +50,11 @@ const formatDateForApi = (date: Date): string => {
 };
 
 const mealService = {
+  quickCreateMealLog: async (data: QuickAddLogData) => {
+    const response = await api.post("/meals/quick", data);
+    return response.data;
+  },
+
   getMealLogs: async (meal_date: Date) => {
 
     const dateString = formatDateForApi(meal_date);

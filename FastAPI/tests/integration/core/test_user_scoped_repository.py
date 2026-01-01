@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from app.core.exceptions import NotFoundError
-from app.meal.models import Meal, MealType
+from app.meal.models import MealLog, MealType
 from app.meal.repositories import MealRepository
 
 
@@ -11,7 +11,17 @@ from app.meal.repositories import MealRepository
 class TestUserScopeRepository:
     async def test_get_by_id_for_user(self, session, user):
         repo = MealRepository(session)
-        meal = Meal(user_id=user.id, date=date(2022, 1, 1), type=MealType.BREAKFAST)
+        meal = MealLog(
+            user_id=user.id,
+            date=date(2022, 1, 1),
+            type=MealType.BREAKFAST,
+            weight=80,
+            name="meal_log_1",
+            calories=150,
+            proteins=15,
+            fats=15,
+            carbs=35,
+        )
         session.add(meal)
         await session.commit()
         await session.refresh(meal)
@@ -21,7 +31,17 @@ class TestUserScopeRepository:
 
     async def test_get_by_id_for_user_wrong_user(self, session, user):
         repo = MealRepository(session)
-        meal = Meal(user_id=user.id, date=date(2022, 1, 1), type=MealType.BREAKFAST)
+        meal = MealLog(
+            user_id=user.id,
+            date=date(2022, 1, 1),
+            type=MealType.BREAKFAST,
+            weight=80,
+            name="meal_log_1",
+            calories=150,
+            proteins=15,
+            fats=15,
+            carbs=35,
+        )
         session.add(meal)
         await session.commit()
         await session.refresh(meal)
@@ -31,7 +51,17 @@ class TestUserScopeRepository:
 
     async def test_get_by_id_for_user_wrong_meal_id(self, session, user):
         repo = MealRepository(session)
-        meal = Meal(user_id=user.id, date=date(2022, 1, 1), type=MealType.BREAKFAST)
+        meal = MealLog(
+            user_id=user.id,
+            date=date(2022, 1, 1),
+            type=MealType.BREAKFAST,
+            weight=80,
+            name="meal_log_1",
+            calories=150,
+            proteins=15,
+            fats=15,
+            carbs=35,
+        )
         session.add(meal)
         await session.commit()
         await session.refresh(meal)
@@ -41,7 +71,17 @@ class TestUserScopeRepository:
 
     async def test_delete_by_id_for_user_success(self, session, user):
         repo = MealRepository(session)
-        meal = Meal(user_id=user.id, date=date(2022, 1, 1), type=MealType.BREAKFAST)
+        meal = MealLog(
+            user_id=user.id,
+            date=date(2022, 1, 1),
+            type=MealType.BREAKFAST,
+            weight=80,
+            name="meal_log_1",
+            calories=150,
+            proteins=15,
+            fats=15,
+            carbs=35,
+        )
         session.add(meal)
         await session.commit()
         await session.refresh(meal)
@@ -53,7 +93,17 @@ class TestUserScopeRepository:
 
     async def test_delete_by_id_for_user_wrong_user(self, session, user):
         repo = MealRepository(session)
-        meal = Meal(user_id=user.id, date=date(2022, 1, 1), type=MealType.BREAKFAST)
+        meal = MealLog(
+            user_id=user.id,
+            date=date(2022, 1, 1),
+            type=MealType.BREAKFAST,
+            weight=80,
+            name="meal_log_1",
+            calories=150,
+            proteins=15,
+            fats=15,
+            carbs=35,
+        )
         session.add(meal)
         await session.commit()
         await session.refresh(meal)
@@ -63,7 +113,17 @@ class TestUserScopeRepository:
 
     async def test_delete_by_id_for_user_wrong_meal_id(self, session, user):
         repo = MealRepository(session)
-        meal = Meal(user_id=user.id, date=date(2022, 1, 1), type=MealType.BREAKFAST)
+        meal = MealLog(
+            user_id=user.id,
+            date=date(2022, 1, 1),
+            type=MealType.BREAKFAST,
+            weight=80,
+            name="meal_log_1",
+            calories=150,
+            proteins=15,
+            fats=15,
+            carbs=35,
+        )
         session.add(meal)
         await session.commit()
         await session.refresh(meal)
