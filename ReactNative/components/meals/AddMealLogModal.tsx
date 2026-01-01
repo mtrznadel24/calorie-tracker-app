@@ -24,7 +24,7 @@ interface AddMealLogModalProps {
   isVisible: boolean;
   onClose: () => void;
   onQuickSubmit: (data: SimpleProductData) => void;
-  onProductSubmit: (product: Product) => Promise<void>;
+  onProductSubmit: (product: Product, weight: number) => Promise<void>;
   onMealSubmit: (meal: Meal) => Promise<void>;
   sectionTitle: string | null;
 }
@@ -56,7 +56,7 @@ const AddMealLogModal = ({ isVisible, onClose, onQuickSubmit, onProductSubmit, o
     setIsLoading(true);
     try {
 
-      await onProductSubmit(selectedProduct);
+      await onProductSubmit(selectedProduct, parseFloat(weight));
       resetAndClose();
     } catch (e) {
       console.error(e);
@@ -113,9 +113,9 @@ const AddMealLogModal = ({ isVisible, onClose, onQuickSubmit, onProductSubmit, o
 
   if (selectedProduct) {
     return (
-      <Modal animationType="slide" visible={isVisible} presentationStyle="pageSheet" onRequestClose={() => setSelectedProduct(null)}>
+      <Modal animationType="slide" visible={isVisible} presentationStyle="pageSheet" onRequestClose={() => resetAndClose}>
          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 bg-white dark:bg-dark-900 justify-center px-6">
-            <Pressable onPress={() => setSelectedProduct(null)} className="absolute top-6 left-4 z-10 p-2 bg-light-100 dark:bg-dark-800 rounded-full">
+            <Pressable onPress={() => resetAndClose} className="absolute top-6 left-4 z-10 p-2 bg-light-100 dark:bg-dark-800 rounded-full">
                 <Ionicons name="arrow-back" size={24} color="gray" />
             </Pressable>
 

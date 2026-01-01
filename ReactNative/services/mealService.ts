@@ -42,6 +42,13 @@ export interface QuickAddLogData {
   weight: number;
 }
 
+export interface FromProductAddLogData {
+  fridge_product_id: number;
+  date: string;
+  type: string;
+  weight: number;
+}
+
 export const formatDateForApi = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -55,9 +62,14 @@ const mealService = {
     return response.data;
   },
 
-  getMealLogs: async (meal_date: Date) => {
+  fromProductCreateMealLog: async (data: FromProductAddLogData) => {
+    const response = await api.post(`/meals/from-product`, data);
+    return response.data;
+  },
 
-    const dateString = formatDateForApi(meal_date);
+  getMealLogs: async (log_date: Date) => {
+
+    const dateString = formatDateForApi(log_date);
     const response = await api.get(`/meals/${dateString}/meal-logs`)
     return response.data;
   }

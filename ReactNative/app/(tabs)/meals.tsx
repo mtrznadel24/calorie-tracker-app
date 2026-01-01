@@ -1,7 +1,7 @@
 import {View, Text, ActivityIndicator, SectionList, Pressable} from "react-native";
 import React, {useEffect, useMemo, useState} from "react";
 import mealService, {
-  formatDateForApi,
+  formatDateForApi, FromProductAddLogData,
   MealLog,
   QuickAddLogData,
   SimpleProductData
@@ -35,7 +35,7 @@ const Meals = () => {
         setMealLogs(logs);
 
       } catch (error) {
-        console.error(error);
+        console.log(error)
         Toast.show({ type: "error", text1: "Failed to fetch meal logs" });
       } finally {
         setIsLoading(false);
@@ -97,14 +97,31 @@ const Meals = () => {
         setMealLogs(prevLogs => [...prevLogs, newLog]);
         setIsModalOpen(false);
         setSelectedSection(null);
+        Toast.show({ type: "success", text1: "Meal log added successfully." });
       } catch (error) {
         console.error(error);
         Toast.show({ type: "error", text1: "Failed to add log" });
       }
     }
 
-  const handleProductAdd = async (product: Product) => {
-
+  const handleProductAdd = async (product: Product, weight: number) => {
+    if (!selectedSection) { return;}
+    try {
+      const LogData: FromProductAddLogData = {
+        fridge_product_id: product.id,
+        date: formatDateForApi(date),
+        type: selectedSection,
+        weight: weight
+      }
+      const newLog = await mealService.fromProductCreateMealLog(LogData)
+      setMealLogs(prevLogs => [...prevLogs, newLog]);
+      setIsModalOpen(false);
+      setSelectedSection(null);
+      Toast.show({ type: "success", text1: "Meal log added successfully." });
+    } catch (error) {
+      console.error(error);
+      Toast.show({ type: "error", text1: "Failed to add log" });
+      }
   }
 
   const handleAddMealLog = async () => {
@@ -276,7 +293,10 @@ const Meals = () => {
       </View>
       <AddMealLogModal
         isVisible={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedSection(null);
+        }}
         onQuickSubmit={handleQuickAddLog}
         onProductSubmit={handleProductAdd}
         onMealSubmit={handleAddMealLog}
