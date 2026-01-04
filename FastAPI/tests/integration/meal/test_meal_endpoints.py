@@ -1,6 +1,7 @@
 import pytest
 
 from app.fridge.models import FoodCategory
+from app.meal.models import MealType
 
 
 @pytest.mark.integration
@@ -136,3 +137,97 @@ class TestMealEndpoints:
     async def test_delete_meal_log_not_found(self, client):
         response = await client.delete("/meals/99999")
         assert response.status_code == 404
+
+        # --- POST /meals/from-meal ---
+
+    async def test_add_meal_log_from_fridge_meal_success(
+        self,
+        client_with_fridge,
+        fridge_meal_factory,
+        fridge_product_factory,
+        fridge_meal_ingredient_factory,
+    ):
+        prod1 = await fridge_product_factory(
+            product_name="Egg",
+            calories_100g=150,
+            proteins_100g=10,
+            fats_100g=10,
+            carbs_100g=10,
+            category=FoodCategory.DAIRY,
+            is_favourite=False,
+        )
+        prod2 = await fridge_product_factory(
+            product_name="Bacon",
+            calories_100g=500,
+            proteins_100g=10,
+            fats_100g=10,
+            carbs_100g=10,
+            category=FoodCategory.DAIRY,
+            is_favourite=False,
+        )
+
+        meal = await fridge_meal_factory("Scrambled Eggs")
+        await fridge_meal_ingredient_factory(meal=meal, weight=100, product=prod1)
+        await fridge_meal_ingredient_factory(meal=meal, weight=50, product=prod2)
+
+        payload = {
+            "fridge_meal_id": meal.id,
+            "date": "2022-01-01",
+            "type": "breakfast",
+            "weight": 300.0,
+        }
+
+        response = await client_with_fridge.post("/meals/from-meal", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert len(data) == 2
+
+        egg_log = next(d for d in data if d["name"] == "Egg")
+        assert egg_log["weight"] == 200.0
+        assert egg_log["calories"] == 300.0
+
+        bacon_log = next(d for d in data if d["name"] == "Bacon")
+        assert bacon_log["weight"] == 100.0
+        assert bacon_log["calories"] == 500.0
+
+    # --- PUT /meals/{log_id}/name ---
+
+    async def test_update_meal_log_name_success(self, client, sample_meal_log):
+        new_name = "Updated Name"
+        response = await client.put(
+            f"/meals/{sample_meal_log.id}/name", params={"log_name": new_name}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["name"] == new_name
+        assert data["id"] == sample_meal_log.id
+
+    # --- PUT /meals/{log_id}/weight ---
+
+    async def test_update_meal_log_weight_recalculates_macros(
+        self, client, meal_log_factory
+    ):
+        log = await meal_log_factory(
+            type=MealType.BREAKFAST,
+            name="meal_log",
+            weight=100,
+            calories=100,
+            proteins=10,
+            fats=10,
+            carbs=10,
+        )
+
+        new_weight = 200
+        response = await client.put(
+            f"/meals/{log.id}/weight", params={"weight": new_weight}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["weight"] == 200.0
+        assert data["calories"] == 200.0
+        assert data["proteins"] == 20.0
