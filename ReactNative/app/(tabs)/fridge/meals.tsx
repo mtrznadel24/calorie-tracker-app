@@ -12,7 +12,6 @@ import fridgeMealsService, {
 import Toast from "react-native-toast-message";
 import AddMealModal from "@/components/fridge/AddMealModal";
 import EditMealModal from "@/components/fridge/EditMealModal";
-import fridgeProductsService, {Product} from "@/services/fridgeProductsService";
 
 const FridgeMealsScreen = () => {
   const [searchText, setSearchText] = useState("");
@@ -171,7 +170,8 @@ const FridgeMealsScreen = () => {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View className="items-center justify-center mt-10">
-              <Text className="text-gray-400">No meals found</Text>
+              <Ionicons name="fast-food-outline" size={48} color="gray" opacity={0.5} />
+              <Text className="text-gray-400 mt-2">No meals found</Text>
             </View>
           }
           renderItem={({ item }) => (
@@ -183,6 +183,7 @@ const FridgeMealsScreen = () => {
               fats={item.fats}
               carbs={item.carbs}
               productsCount={item.products_count}
+              weight={item.weight}
               isFavourite={item.is_favourite}
               onToggleFavourite={() =>  handleToggleFavourite(item)}
               onPress={() => {

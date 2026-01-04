@@ -1,432 +1,233 @@
-from datetime import date
-
 import pytest
 
 from app.fridge.models import FoodCategory
 from app.meal.models import MealType
-from tests.integration.meal.conftest import create_meals_with_ingredients
 
 
 @pytest.mark.integration
 class TestMealEndpoints:
-    # --- POST /meals ---
-
-    async def test_add_meal_success(self, client):
-        payload = {"date": "2022-01-01", "type": "breakfast"}
-        response = await client.post("/meals", json=payload)
+    # --- POST /meals/quick ---
+    async def test_quick_add_meal_log_success(self, client):
+        payload = {
+            "date": "2022-01-01",
+            "type": "breakfast",
+            "weight": 50,
+            "name": "log1",
+            "calories": 150,
+            "proteins": 20,
+            "fats": 15,
+            "carbs": 30,
+        }
+        response = await client.post("/meals/quick", json=payload)
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data["id"], int)
-        assert data["date"] == "2022-01-01"
-        assert data["type"] == "breakfast"
+        assert data["weight"] == 50
+        assert data["calories"] == 150
 
-    async def test_add_meal_no_auth(self, client_no_user):
-        payload = {"date": "2022-01-01", "type": "breakfast"}
-        response = await client_no_user.post("/meals", json=payload)
-        assert response.status_code == 401
-
-    async def test_add_meal_wrong_data(self, client):
-        payload = {"date": "2022-01-01", "type": "breakfastsd"}
-        response = await client.post("/meals", json=payload)
+    async def test_add_meal_log_wrong_data(self, client):
+        payload = {
+            "date": "2022-01-01",
+            "type": "breakfastds",
+            "weight": 50,
+            "name": "log1",
+            "calories": 150,
+            "proteins": 20,
+            "fats": 15,
+            "carbs": 30,
+        }
+        response = await client.post("/meals/quick", json=payload)
         assert response.status_code == 422
 
-    async def test_add_meal_already_exists(self, client, sample_meal):
-        payload = {"date": "2022-01-01", "type": "breakfast"}
-        response = await client.post("/meals", json=payload)
+    # --- POST /meals/from-product ---
+
+    async def test_add_meal_log_from_fridge_product_success(
+        self, client_with_fridge, fridge_product_factory
+    ):
+        product = await fridge_product_factory(
+            product_name="Test Product",
+            calories_100g=100,
+            proteins_100g=10,
+            fats_100g=10,
+            carbs_100g=10,
+            category=FoodCategory.DAIRY,
+            is_favourite=False,
+        )
+
+        payload = {
+            "fridge_product_id": product.id,
+            "date": "2022-01-01",
+            "type": "lunch",
+            "weight": 50.0,  # Połowa porcji
+        }
+
+        response = await client_with_fridge.post("/meals/from-product", json=payload)
+
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data["id"], int)
-        assert data["date"] == "2022-01-01"
-        assert data["type"] == "breakfast"
 
-    # --- GET /meals/lookup ---
+        assert data["name"] == "Test Product"
+        assert data["weight"] == 50.0
+        assert data["calories"] == 50.0
+        assert data["proteins"] == 5.0
 
-    async def test_read_meal_success(self, client, sample_meal):
-        payload = {"meal_date": "2022-01-01", "meal_type": "breakfast"}
-        response = await client.get("/meals/lookup", params=payload)
+    async def test_add_meal_log_from_fridge_product_not_found(self, client_with_fridge):
+        payload = {
+            "fridge_product_id": 9999,
+            "date": "2022-01-01",
+            "type": "lunch",
+            "weight": 50.0,
+        }
+        response = await client_with_fridge.post("/meals/from-product", json=payload)
+        assert response.status_code == 404
+
+    # --- GET /meals/{log_id} ---
+
+    async def test_read_meal_by_id_success(self, client, sample_meal_log):
+        response = await client.get(f"/meals/{sample_meal_log.id}")
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data["id"], int)
-        assert data["date"] == "2022-01-01"
-        assert data["type"] == "breakfast"
-
-    async def test_read_meal_no_auth(self, client_no_user, sample_meal):
-        payload = {"meal_date": "2022-01-01", "meal_type": "breakfast"}
-        response = await client_no_user.get("/meals/lookup", params=payload)
-        assert response.status_code == 401
-
-    async def test_read_meal_no_meal(self, client):
-        payload = {"meal_date": "2022-01-01", "meal_type": "breakfast"}
-        response = await client.get("/meals/lookup", params=payload)
-        assert response.status_code == 200
-        data = response.json()
-        assert data is None
-
-    # --- GET /meals/{meal_id} ---
-
-    async def test_read_meal_by_id_success(self, client, sample_meal):
-        response = await client.get(f"/meals/{sample_meal.id}")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["id"] == sample_meal.id
-        assert data["date"] == "2022-01-01"
-        assert data["type"] == "breakfast"
-
-    async def test_read_meal_by_id_no_auth(self, client_no_user, sample_meal):
-        response = await client_no_user.get(f"/meals/{sample_meal.id}")
-        assert response.status_code == 401
+        assert data["id"] == sample_meal_log.id
 
     async def test_read_meal_by_id_not_found(self, client):
         response = await client.get("/meals/99999")
         assert response.status_code == 404
 
-    # --- DELETE /meals/{meal_id} ---
+    # --- GET /meals/{date}/meal-logs ---
 
-    async def test_delete_meal_success(self, client, sample_meal):
-        response = await client.delete(f"/meals/{sample_meal.id}")
+    async def test_read_meal_logs_by_date(self, client, meal_log_factory):
+        await meal_log_factory(
+            weight=100,
+            type="breakfast",
+            name="meal1",
+            calories=100,
+            proteins=10,
+            fats=10,
+            carbs=10,
+        )
+        await meal_log_factory(
+            weight=100,
+            type="dinner",
+            name="meal2",
+            calories=100,
+            proteins=10,
+            fats=10,
+            carbs=10,
+        )
+
+        response = await client.get("/meals/2022-01-01/meal-logs")
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == sample_meal.id
+        assert len(data) == 2
 
-        follow_up = await client.get(f"/meals/{sample_meal.id}")
-        assert follow_up.status_code == 404
+        response_empty = await client.get("/meals/2022-01-02/meal-logs")
+        assert response_empty.status_code == 200
+        assert len(response_empty.json()) == 0
 
-    async def test_delete_meal_no_auth(self, client_no_user, sample_meal):
-        response = await client_no_user.delete(f"/meals/{sample_meal.id}")
-        assert response.status_code == 401
+    # --- DELETE /meals/{log_id} ---
 
-    async def test_delete_meal_not_found(self, client):
+    async def test_delete_meal_log_success(self, client, sample_meal_log):
+        response = await client.delete(f"/meals/{sample_meal_log.id}")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == sample_meal_log.id
+
+        get_response = await client.get(f"/meals/{sample_meal_log.id}")
+        assert get_response.status_code == 404
+
+    async def test_delete_meal_log_not_found(self, client):
         response = await client.delete("/meals/99999")
         assert response.status_code == 404
 
-    # --- GET /meals/{meal_id}/nutrients
+        # --- POST /meals/from-meal ---
 
-    async def test_get_meal_nutrient_sum_success(
-        self, client, sample_meal_with_ingredients
-    ):
-        response = await client.get(
-            f"meals/{sample_meal_with_ingredients.id}/nutrients",
-            params={"nutrient_type": "calories"},
-        )
-        assert response.status_code == 200
-        value = response.json()
-        assert isinstance(value, float)
-        assert value == round(0.5 * 89 + 110 + 0.5 * 100, 0)
-
-    async def test_get_meal_nutrient_sum_no_ingredient(self, client, sample_meal):
-        response = await client.get(
-            f"meals/{sample_meal.id}/nutrients", params={"nutrient_type": "calories"}
-        )
-        assert response.status_code == 200
-        value = response.json()
-        assert isinstance(value, float)
-        assert value == 0
-
-    async def test_get_meal_nutrient_sum_no_auth(
-        self, client_no_user, sample_meal_with_ingredients
-    ):
-        response = await client_no_user.get(
-            f"/meals/{sample_meal_with_ingredients.id}/nutrients",
-            params={"nutrient_type": "calories"},
-        )
-        assert response.status_code == 401
-
-    async def test_get_meal_nutrient_sum_wrong_meal_id(self, client):
-        response = await client.get(
-            "/meals/99999/nutrients", params={"nutrient_type": "calories"}
-        )
-        assert response.status_code == 404
-
-    async def test_get_meal_nutrient_sum_invalid_param(
-        self, client, sample_meal_with_ingredients
-    ):
-        response = await client.get(
-            f"/meals/{sample_meal_with_ingredients.id}/nutrients",
-            params={"nutrient_type": "vitaminC"},
-        )
-        assert response.status_code == 422
-
-    # --- GET /meals/{meal_id/macro
-
-    async def test_get_meal_macro_success(self, client, sample_meal_with_ingredients):
-        response = await client.get(f"meals/{sample_meal_with_ingredients.id}/macro")
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, dict)
-        assert data["calories"] == round(204.5, 0)
-        assert data["proteins"] == round(22.0, 1)
-        assert data["fats"] == round(8.15, 1)
-        assert data["carbs"] == round(69.6, 1)
-
-    async def test_get_meal_macro_no_ingredients(self, client, sample_meal):
-        response = await client.get(f"meals/{sample_meal.id}/macro")
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, dict)
-        assert data["calories"] == 0, 1
-        assert data["proteins"] == 0
-        assert data["fats"] == 0
-        assert data["carbs"] == 0
-
-    async def test_get_meal_macro_no_auth(
-        self, client_no_user, sample_meal_with_ingredients
-    ):
-        response = await client_no_user.get(
-            f"/meals/{sample_meal_with_ingredients.id}/macro"
-        )
-        assert response.status_code == 401
-
-    async def test_get_meal_macro_wrong_meal_id(self, client):
-        response = await client.get("/meals/99999/macro")
-        assert response.status_code == 404
-
-    async def test_get_meals_nutrient_sum_for_day_success(
-        self, client, meal_factory, ingredient_factory
-    ):
-        await create_meals_with_ingredients(meal_factory, ingredient_factory)
-        payload = {"meal_date": "2022-01-01", "nutrient_type": "calories"}
-        response = await client.get("/meals/daily/nutrients", params=payload)
-        print(response.json())
-        assert response.status_code == 200
-        value = response.json()
-        assert isinstance(value, float)
-        assert value == round(1477.5, 0)
-
-    async def test_get_meals_nutrient_sum_for_day_no_auth(
-        self, client_no_user, meal_factory, ingredient_factory
-    ):
-        await create_meals_with_ingredients(meal_factory, ingredient_factory)
-        payload = {"meal_date": "2022-01-01", "nutrient_type": "calories"}
-        response = await client_no_user.get("/meals/daily/nutrients", params=payload)
-        assert response.status_code == 401
-
-    async def test_get_meals_nutrient_sum_for_day_no_meals(self, client):
-        payload = {"meal_date": "2022-01-01", "nutrient_type": "calories"}
-        response = await client.get("/meals/daily/nutrients", params=payload)
-        assert response.status_code == 200
-        value = response.json()
-        assert isinstance(value, float)
-        assert value == 0
-
-    async def test_get_macro_for_day_success(
-        self, client, meal_factory, ingredient_factory
-    ):
-        await create_meals_with_ingredients(meal_factory, ingredient_factory)
-        response = await client.get(
-            "/meals/daily/macro", params={"meal_date": "2022-01-01"}
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, dict)
-        expected = {
-            "calories": round(1477.5, 0),
-            "proteins": 121.7,
-            "fats": 17.7,
-            "carbs": 203.2,
-        }
-        assert data == expected
-
-    async def test_get_macro_for_day_no_auth(
-        self, client_no_user, meal_factory, ingredient_factory
-    ):
-        await create_meals_with_ingredients(meal_factory, ingredient_factory)
-        response = await client_no_user.get(
-            "/meals/daily/macro", params={"meal_date": "2022-01-01"}
-        )
-        assert response.status_code == 401
-
-    async def test_get_macro_for_day_no_meals(self, client):
-        response = await client.get(
-            "/meals/daily/macro", params={"meal_date": "2022-01-01"}
-        )
-        print(response.json())
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, dict)
-        assert data == {"calories": 0, "proteins": 0, "fats": 0, "carbs": 0}
-
-    # POST /{meal_date}/{meal_type}/ingredients/from-fridge-product/{fridge_product_id}
-
-    async def test_add_fridge_product_to_meal_success(
-        self, client_with_fridge, fridge_product_factory
-    ):
-        product = await fridge_product_factory(
-            product_name="Product1",
-            calories_100g=150,
-            proteins_100g=25,
-            fats_100g=10,
-            carbs_100g=40,
-            category=FoodCategory.FRUIT,
-            is_favourite=False,
-        )
-        payload = {"weight": 50}
-        response = await client_with_fridge.post(
-            f"/meals/{date(2022, 1, 1)}/"
-            f"{MealType.BREAKFAST.value}/"
-            f"ingredients/from-fridge-product/{product.id}",
-            json=payload,
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["weight"] == 50
-        assert isinstance(data["id"], int)
-        details = data["details"]
-        assert details["product_name"] == "Product1"
-        assert details["calories_100g"] == 150
-
-    async def test_add_fridge_product_to_meal_success_meal_exits(
-        self, client_with_fridge, sample_meal, fridge_product_factory
-    ):
-        product = await fridge_product_factory(
-            product_name="Product1",
-            calories_100g=150,
-            proteins_100g=25,
-            fats_100g=10,
-            carbs_100g=40,
-            category=FoodCategory.FRUIT,
-            is_favourite=False,
-        )
-        payload = {"weight": 50}
-        response = await client_with_fridge.post(
-            f"/meals/{date(2022, 1, 1)}/"
-            f"{MealType.BREAKFAST.value}/"
-            f"ingredients/from-fridge-product/{product.id}",
-            json=payload,
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["weight"] == 50
-        assert isinstance(data["id"], int)
-        details = data["details"]
-        assert details["product_name"] == "Product1"
-        assert details["calories_100g"] == 150
-
-        async def test_add_fridge_product_to_meal_success_meal_exits(
-            self, client_with_fridge, sample_meal, fridge_product_factory
-        ):
-            product = await fridge_product_factory(
-                product_name="Product1",
-                calories_100g=150,
-                proteins_100g=25,
-                fats_100g=10,
-                carbs_100g=40,
-                category=FoodCategory.FRUIT,
-                is_favourite=False,
-            )
-            payload = {"weight": 50}
-            response = await client_with_fridge.post(
-                f"/meals/{date(2022, 1, 1)}/"
-                f"{MealType.BREAKFAST.value}/"
-                f"ingredients/from-fridge-product/{product.id}",
-                json=payload,
-            )
-            assert response.status_code == 200
-            data = response.json()
-            assert data["weight"] == 50
-            assert isinstance(data["id"], int)
-            details = data["details"]
-            assert details["product_name"] == "Product1"
-            assert details["calories_100g"] == 150
-
-    async def test_add_fridge_product_to_meal_no_auth(
-        self, client_no_user, sample_meal, fridge_product_factory
-    ):
-        product = await fridge_product_factory(
-            product_name="Product1",
-            calories_100g=150,
-            proteins_100g=25,
-            fats_100g=10,
-            carbs_100g=40,
-            category=FoodCategory.FRUIT,
-            is_favourite=False,
-        )
-        payload = {"weight": 50}
-        response = await client_no_user.post(
-            f"/meals/{date(2022, 1, 1)}/"
-            f"{MealType.BREAKFAST.value}/"
-            f"ingredients/from-fridge-product/{product.id}",
-            json=payload,
-        )
-        assert response.status_code == 401
-
-    async def test_add_fridge_product_to_meal_wrong_product_id(
-        self, client_with_fridge, sample_meal, fridge_product_factory
-    ):
-        payload = {"weight": 50}
-        response = await client_with_fridge.post(
-            f"/meals/{date(2022, 1, 1)}/"
-            f"{MealType.BREAKFAST.value}/"
-            f"ingredients/from-fridge-product/99999",
-            json=payload,
-        )
-        assert response.status_code == 404
-
-    # - POST /{meal_date}/{meal_type}/ingredients/from-fridge-meal/{fridge_meal_id} -
-
-    # TODO fix later
-    # async def test_add_fridge_meal_to_meal_success(
-    #     self,
-    #     client_with_fridge,
-    #     fridge_product_factory,
-    #     fridge_meal_factory,
-    #     fridge_meal_ingredient_factory,
-    # ):
-    #     fridge_meal = await fridge_meal_factory(meal_name="Meal1")
-    #     fridge_products = [
-    #         await fridge_product_factory(
-    #             product_name=name,
-    #             calories_100g=150,
-    #             proteins_100g=25,
-    #             fats_100g=10,
-    #             carbs_100g=40,
-    #             category=FoodCategory.FRUIT,
-    #             is_favourite=False,
-    #         )
-    #         for name in ["Product1", "Product2", "Product3"]
-    #     ]
-    #     [
-    #         await fridge_meal_ingredient_factory(fridge_meal, 50, prod)
-    #         for prod in fridge_products
-    #     ]
-    #
-    #     payload = {"weight": 50}
-    #     response = await client_with_fridge.post(
-    #         f"/meals/{date(2022, 1, 1)}/"
-    #         f"{MealType.BREAKFAST.value}/"
-    #         f"ingredients/from-fridge-meal/{fridge_meal.id}",
-    #         json=payload,
-    #     )
-    #     assert response.status_code == 200
-    #     data = response.json()
-    #     assert isinstance(data, list)
-    #
-    #     assert len(data) == 3
-    #
-    #     for i, ingredient in enumerate(data):
-    #         assert isinstance(ingredient["id"], int)
-    #         assert ingredient["weight"] == 17.0
-    #
-    #         details = ingredient["details"]
-    #         assert details["product_name"] == f"Product{i + 1}"
-    #         assert details["calories_100g"] == 150.0
-    #         assert details["proteins_100g"] == 25.0
-    #         assert details["fats_100g"] == 10.0
-    #         assert details["carbs_100g"] == 40.0
-
-    async def test_add_fridge_meal_to_meal_fridge_meal_no_ingredients(
+    async def test_add_meal_log_from_fridge_meal_success(
         self,
         client_with_fridge,
-        fridge_product_factory,
         fridge_meal_factory,
+        fridge_product_factory,
         fridge_meal_ingredient_factory,
     ):
-        fridge_meal = await fridge_meal_factory(meal_name="Meal1")
-
-        payload = {"weight": 50}
-        response = await client_with_fridge.post(
-            f"/meals/{date(2022, 1, 1)}/"
-            f"{MealType.BREAKFAST.value}/"
-            f"ingredients/from-fridge-meal/{fridge_meal.id}",
-            json=payload,
+        prod1 = await fridge_product_factory(
+            product_name="Egg",
+            calories_100g=150,
+            proteins_100g=10,
+            fats_100g=10,
+            carbs_100g=10,
+            category=FoodCategory.DAIRY,
+            is_favourite=False,
         )
-        assert response.status_code == 404
+        prod2 = await fridge_product_factory(
+            product_name="Bacon",
+            calories_100g=500,
+            proteins_100g=10,
+            fats_100g=10,
+            carbs_100g=10,
+            category=FoodCategory.DAIRY,
+            is_favourite=False,
+        )
+
+        meal = await fridge_meal_factory("Scrambled Eggs")
+        await fridge_meal_ingredient_factory(meal=meal, weight=100, product=prod1)
+        await fridge_meal_ingredient_factory(meal=meal, weight=50, product=prod2)
+
+        payload = {
+            "fridge_meal_id": meal.id,
+            "date": "2022-01-01",
+            "type": "breakfast",
+            "weight": 300.0,
+        }
+
+        response = await client_with_fridge.post("/meals/from-meal", json=payload)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert len(data) == 2
+
+        egg_log = next(d for d in data if d["name"] == "Egg")
+        assert egg_log["weight"] == 200.0
+        assert egg_log["calories"] == 300.0
+
+        bacon_log = next(d for d in data if d["name"] == "Bacon")
+        assert bacon_log["weight"] == 100.0
+        assert bacon_log["calories"] == 500.0
+
+    # --- PUT /meals/{log_id}/name ---
+
+    async def test_update_meal_log_name_success(self, client, sample_meal_log):
+        new_name = "Updated Name"
+        response = await client.put(
+            f"/meals/{sample_meal_log.id}/name", params={"log_name": new_name}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["name"] == new_name
+        assert data["id"] == sample_meal_log.id
+
+    # --- PUT /meals/{log_id}/weight ---
+
+    async def test_update_meal_log_weight_recalculates_macros(
+        self, client, meal_log_factory
+    ):
+        log = await meal_log_factory(
+            type=MealType.BREAKFAST,
+            name="meal_log",
+            weight=100,
+            calories=100,
+            proteins=10,
+            fats=10,
+            carbs=10,
+        )
+
+        new_weight = 200
+        response = await client.put(
+            f"/meals/{log.id}/weight", params={"weight": new_weight}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["weight"] == 200.0
+        assert data["calories"] == 200.0
+        assert data["proteins"] == 20.0

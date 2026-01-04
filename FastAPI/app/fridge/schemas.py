@@ -91,6 +91,7 @@ class FridgeMealRead(BaseModel):
     fats: float
     carbs: float
     products_count: int
+    weight: int
 
     model_config = ConfigDict(from_attributes=True)
 

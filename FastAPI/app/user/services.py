@@ -9,7 +9,13 @@ from app.fridge.models import Fridge
 from app.measurements.repositories import WeightRepository
 from app.user.models import User
 from app.user.repositories import UserRepository
-from app.user.schemas import UserCreate, UserUpdate, UserUpdateEmail, UserUpdatePassword
+from app.user.schemas import (
+    UserCreate,
+    UserRead,
+    UserUpdate,
+    UserUpdateEmail,
+    UserUpdatePassword,
+)
 from app.utils.health_metrics import calculate_bmi, calculate_bmr, calculate_tdee
 
 logger = logging.getLogger(__name__)
@@ -53,6 +59,13 @@ class UserService:
         except IntegrityError:
             raise ConflictError("User already exists") from None
         return user_instance
+
+    async def get_current_user(self, user: User) -> UserRead:
+        weight_in = await self.weight_repo.get_current_weight(user.id)
+        current_weight = weight_in.weight if weight_in else None
+        user_dto = UserRead.model_validate(user)
+        user_dto.current_weight = current_weight
+        return user_dto
 
     async def update_user(self, user_id: int, data: UserUpdate) -> User:
         user_instance = await self.repo.get_by_id(user_id)

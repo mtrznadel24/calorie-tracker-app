@@ -20,8 +20,6 @@ import {
 import clsx from "clsx";
 import {Ionicons} from "@expo/vector-icons";
 import AddIngredientModal from "@/components/fridge/AddIngredientModal";
-import AddProductModal from "@/components/fridge/AddProductModal";
-import Toast from "react-native-toast-message";
 
 
 interface AddMealModalProps {

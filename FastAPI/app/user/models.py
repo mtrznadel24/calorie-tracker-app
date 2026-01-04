@@ -37,6 +37,7 @@ class User(Base):
     age = Column(Integer)
     gender = Column(SqlEnum(Gender, name="gender"))
     activity_level = Column(Float)
+    target_weekly_gain = Column(Float, default=0, nullable=False)
 
     fridge = relationship(
         "Fridge",
@@ -45,7 +46,9 @@ class User(Base):
         cascade="all, delete-orphan",
         lazy="joined",
     )
-    meals = relationship("Meal", back_populates="user", cascade="all, delete-orphan")
+    meal_logs = relationship(
+        "MealLog", back_populates="user", cascade="all, delete-orphan"
+    )
     weights = relationship(
         "Weight", back_populates="user", cascade="all, delete-orphan"
     )

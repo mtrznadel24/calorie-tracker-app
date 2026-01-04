@@ -164,9 +164,10 @@ const FridgeProductList = ({onProductPress, onAddButtonPress, onToggleFavourite}
             contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
-                <View className="items-center justify-center mt-10">
-                    <Text className="text-gray-400">No products found</Text>
-                </View>
+              <View className="items-center justify-center mt-10">
+                <Ionicons name="fast-food-outline" size={48} color="gray" opacity={0.5} />
+                <Text className="text-gray-400 mt-2">No products found</Text>
+              </View>
             }
             renderItem={({ item }) => (
             <ProductCard
