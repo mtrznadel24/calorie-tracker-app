@@ -1,8 +1,9 @@
-import { Stack, useRouter } from "expo-router";
+import {Stack, useRouter} from "expo-router";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
-import { Pressable } from "react-native";
+import { Pressable, View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileLayout() {
   const colorScheme = useColorScheme();
@@ -11,30 +12,38 @@ export default function ProfileLayout() {
 
   const headerBackgroundColor = isDark ? Colors.dark[900] : Colors.light[100];
   const headerTextColor = isDark ? Colors.light[100] : Colors.dark[900];
-
-  const contentBackgroundColor = isDark ? Colors.dark[900] : Colors.light[100];
+  const headerBorderColor = isDark ? Colors.dark[700] : Colors.light[300];
 
   return (
     <Stack
       screenOptions={{
         headerShown: true,
-        headerStyle: {
-          backgroundColor: headerBackgroundColor,
-        },
-        headerTintColor: headerTextColor,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-        headerShadowVisible: false,
 
-        contentStyle: { backgroundColor: contentBackgroundColor },
+        header: ({ options, navigation }) => (
+          <View style={{ backgroundColor: headerBackgroundColor }}>
+            <SafeAreaView edges={['top']}>
+              <View className="h-14 flex-row items-center justify-center px-4 border-b"
+                    style={{ borderColor: headerBorderColor }}>
 
-        headerLeft: ({ canGoBack }) =>
-          canGoBack ? (
-            <Pressable onPress={() => router.back()} className="mr-4">
-               <Ionicons name="arrow-back" size={24} color={headerTextColor} />
-            </Pressable>
-          ) : null,
+                {navigation.canGoBack() && (
+                  <Pressable
+                    onPress={() => navigation.goBack()}
+                    className="absolute left-4 z-10 p-2"
+                  >
+                    <Ionicons name="arrow-back" size={24} color={headerTextColor} />
+                  </Pressable>
+                )}
+
+                <Text className="font-bold text-xl text-dark-900 dark:text-light-100">
+                  {options.title}
+                </Text>
+
+              </View>
+            </SafeAreaView>
+          </View>
+        ),
+
+        contentStyle: { backgroundColor: headerBackgroundColor },
       }}
     >
       <Stack.Screen

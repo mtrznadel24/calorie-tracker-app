@@ -6,6 +6,7 @@ export interface UserUpdateData {
   age?: number | null;
   gender?: string | null;
   activity_level?: number | null;
+  target_weekly_gain?: number | null;
 }
 
 const userService = {
