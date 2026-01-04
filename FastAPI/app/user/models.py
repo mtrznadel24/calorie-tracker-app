@@ -37,6 +37,7 @@ class User(Base):
     age = Column(Integer)
     gender = Column(SqlEnum(Gender, name="gender"))
     activity_level = Column(Float)
+    target_weekly_gain = Column(Float, default=0, nullable=False)
 
     fridge = relationship(
         "Fridge",

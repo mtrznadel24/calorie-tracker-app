@@ -1,7 +1,7 @@
 import {View, Text, ActivityIndicator, SectionList, Pressable} from "react-native";
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useState} from "react";
 import mealService, {
-  formatDateForApi, FromProductAddLogData,
+  formatDateForApi, FromMealAddLogData, FromProductAddLogData,
   MealLog,
   QuickAddLogData,
   SimpleProductData
@@ -11,6 +11,10 @@ import {SafeAreaView} from "react-native-safe-area-context";
 import {Ionicons} from "@expo/vector-icons";
 import AddMealLogModal from "@/components/meals/AddMealLogModal";
 import {Product} from "@/services/fridgeProductsService";
+import {Meal} from "@/services/fridgeMealsService";
+import {useFocusEffect} from "expo-router";
+import LogModal from "@/components/meals/LogModal";
+import {useAuth} from "@/contexts/AuthContext";
 
 const MEAL_SECTIONS = [
   { title: "Breakfast", type: "breakfast" },
@@ -24,16 +28,26 @@ const Meals = () => {
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [date, setDate] = useState(new Date());
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddMealLogModalOpen, setIsAddMealLogModalOpen] = useState(false);
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [selectedLog, setSelectedLog] = useState<MealLog | null>(null);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchMealLogs = async () => {
+
+  useFocusEffect(
+    useCallback(() => {
+      const today = new Date();
+      setDate(today);
+      fetchMealLogs(today);
+    }, [])
+  );
+
+  const fetchMealLogs = async (selectedDate = date) => {
       setIsLoading(true);
       try {
-        const logs = await mealService.getMealLogs(date);
+        const logs = await mealService.getMealLogs(selectedDate);
         setMealLogs(logs);
-
       } catch (error) {
         console.log(error)
         Toast.show({ type: "error", text1: "Failed to fetch meal logs" });
@@ -41,10 +55,6 @@ const Meals = () => {
         setIsLoading(false);
       }
     };
-
-
-    fetchMealLogs();
-  }, [date]);
 
   const sections = useMemo(() => {
     return MEAL_SECTIONS.map((section) => ({
@@ -66,6 +76,28 @@ const Meals = () => {
     );
   }, [mealLogs]);
 
+  const caloriesGoal = useMemo(() => {
+
+    if (!user || !user.current_weight || !user.height || !user.age || !user.activity_level || !user.gender) {
+      return 0;
+    }
+
+    let bmr = 0;
+    if (user.gender === "male") {
+      bmr = (10 * user.current_weight) + (6.25 * user.height) - (5 * user.age) + 5
+    } else if (user.gender === "female") {
+      bmr = (10 * user.current_weight) + (6.25 * user.height) - (5 * user.age) - 161
+    }
+    const tdee = bmr * user.activity_level;
+    const surplus = (user.target_weekly_gain || 0) * 1100;
+
+    return Math.round(tdee + surplus);
+  }, [user, mealLogs])
+
+  const remainingCalories = useMemo(() => {
+    return caloriesGoal - dailyTotals.calories;
+  }, [caloriesGoal, dailyTotals.calories]);
+
   const formatDate = (d: Date) => {
     return d.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -78,6 +110,7 @@ const Meals = () => {
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() + days);
     setDate(newDate);
+    fetchMealLogs(newDate);
   };
 
     const handleQuickAddLog = async (log: SimpleProductData) => {
@@ -95,7 +128,7 @@ const Meals = () => {
         }
         const newLog = await mealService.quickCreateMealLog(logData);
         setMealLogs(prevLogs => [...prevLogs, newLog]);
-        setIsModalOpen(false);
+        setIsAddMealLogModalOpen(false);
         setSelectedSection(null);
         Toast.show({ type: "success", text1: "Meal log added successfully." });
       } catch (error) {
@@ -115,7 +148,7 @@ const Meals = () => {
       }
       const newLog = await mealService.fromProductCreateMealLog(LogData)
       setMealLogs(prevLogs => [...prevLogs, newLog]);
-      setIsModalOpen(false);
+      setIsAddMealLogModalOpen(false);
       setSelectedSection(null);
       Toast.show({ type: "success", text1: "Meal log added successfully." });
     } catch (error) {
@@ -124,8 +157,44 @@ const Meals = () => {
       }
   }
 
-  const handleAddMealLog = async () => {
+  const handleAddMealLog = async (meal: Meal, weight: number) => {
+    if (!selectedSection) { return;}
+    try {
+      const LogData: FromMealAddLogData = {
+        fridge_meal_id: meal.id,
+        date: formatDateForApi(date),
+        type: selectedSection,
+        weight: weight
+      }
+      const newLogs = await mealService.fromMealCreateMealLog(LogData);
+      setMealLogs(prevLogs => [...prevLogs, ...newLogs]);
+      setIsAddMealLogModalOpen(false);
+      setSelectedSection(null);
+      Toast.show({ type: "success", text1: "Meal logs added successfully." });
+    } catch (error) {
+      console.error(error);
+      Toast.show({ type: "error", text1: "Failed to add logs" });
+    }
+  }
 
+  const handleUpdateMealLog = async (name: string, weight: number) => {
+    if (!selectedLog) { return;}
+    try {
+      if (selectedLog.name !== name) {
+        const newLog = await mealService.updateMeaLogName(selectedLog.id, name)
+        setMealLogs((logs) => logs.map(log => selectedLog.id === log.id ? newLog : log));
+      }
+      if (selectedLog.weight !== weight) {
+        const newLog = await mealService.updateMeaLogWeight(selectedLog.id, weight);
+        setMealLogs(logs => logs.map(log => selectedLog.id === log.id ? newLog : log));
+      }
+      setIsLogModalOpen(false);
+      setSelectedLog(null);
+      Toast.show({ type: "success", text1: "Updated log successfully." });
+    } catch (error) {
+      console.error(error);
+      Toast.show({ type: "error", text1: "Failed to update log" });
+    }
   }
 
   return (
@@ -178,12 +247,12 @@ const Meals = () => {
                       {title}
                       </Text>
                       <Text className="text-sm font-medium text-gray-400 mb-1">
-                        {sectionCals} kcal
+                        {sectionCals.toFixed(0)} kcal
                       </Text>
                     </View>
                     <Pressable
                       onPress={() => {
-                        setIsModalOpen(true);
+                        setIsAddMealLogModalOpen(true);
                         setSelectedSection(type);
                       }}
                       className={"bg-blue-50 dark:bg-blue-900/20 p-2 rounded-full active:bg-blue-100 dark:active:bg-blue-900/40"}
@@ -198,7 +267,12 @@ const Meals = () => {
             }}
 
             renderItem={({ item }) => (
-              <View className="bg-white dark:bg-dark-800 p-3.5 rounded-2xl mb-2.5 shadow-sm border border-light-200 dark:border-dark-700 flex-row justify-between items-center">
+              <Pressable
+                onPress={() => {
+                  setSelectedLog(item);
+                  setIsLogModalOpen(true);
+                }}
+                className="bg-white dark:bg-dark-800 p-3.5 rounded-2xl mb-2.5 shadow-sm border border-light-200 dark:border-dark-700 flex-row justify-between items-center active:opacity-70 active:bg-gray-50 dark:active:bg-dark-700">
 
                 <View className="flex-1 pr-4 justify-center">
                   <Text
@@ -224,30 +298,30 @@ const Meals = () => {
 
                   <View className="flex-row items-center gap-3">
 
-                    <View className="flex-row items-center">
-                      <Text className="text-[10px] font-black text-blue-600 dark:text-blue-400 mr-1">P</Text>
-                      <Text className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                        {item.proteins.toFixed(0)}
-                      </Text>
-                    </View>
+                    <View className="flex-row items-center bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded-md">
+                    <Text className="text-[10px] font-black text-blue-600 dark:text-blue-400 mr-1">P</Text>
+                    <Text className="text-[10px] font-bold text-gray-600 dark:text-gray-300">
+                      {item.proteins.toFixed(0)}
+                    </Text>
+                  </View>
 
-                    <View className="flex-row items-center">
-                      <Text className="text-[10px] font-black text-yellow-600 dark:text-yellow-400 mr-1">F</Text>
-                      <Text className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                        {item.fats.toFixed(0)}
-                      </Text>
-                    </View>
+                  <View className="flex-row items-center bg-yellow-50 dark:bg-yellow-900/20 px-1.5 py-0.5 rounded-md">
+                    <Text className="text-[10px] font-black text-yellow-600 dark:text-yellow-400 mr-1">F</Text>
+                    <Text className="text-[10px] font-bold text-gray-600 dark:text-gray-300">
+                      {item.fats.toFixed(0)}
+                    </Text>
+                  </View>
 
-                    <View className="flex-row items-center">
-                      <Text className="text-[10px] font-black text-orange-600 dark:text-orange-400 mr-1">C</Text>
-                      <Text className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                        {item.carbs.toFixed(0)}
-                      </Text>
-                    </View>
+                  <View className="flex-row items-center bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded-md">
+                    <Text className="text-[10px] font-black text-orange-600 dark:text-orange-400 mr-1">C</Text>
+                    <Text className="text-[10px] font-bold text-gray-600 dark:text-gray-300">
+                      {item.carbs.toFixed(0)}
+                    </Text>
+                  </View>
 
                   </View>
                 </View>
-              </View>
+              </Pressable>
             )}
           />
         )}
@@ -279,22 +353,36 @@ const Meals = () => {
                     </View>
                 </View>
 
-                <View className="items-end">
-                    <View className="flex-row items-baseline">
-                        <Text className="text-4xl font-extrabold text-primary tracking-tight">
-                            {dailyTotals.calories.toFixed(0)}
-                        </Text>
-                        <Text className="text-sm text-gray-500 font-medium ml-1 mb-1">kcal</Text>
-                    </View>
+                <View className="items-center flex-col">
+                  <View className="flex-row items-baseline">
+                    <Text className="text-3xl font-extrabold text-primary tracking-tight">
+                      {dailyTotals.calories.toFixed(0)}
+                    </Text>
+                    <Text className="text-lg text-gray-400 font-medium ml-1">
+                      / {caloriesGoal > 0 ? caloriesGoal : '--'}
+                    </Text>
+                    <Text className="text-xs text-gray-500 font-medium ml-1 mb-2 text-uppercase">kcal</Text>
+                  </View>
+
+                  <View className="flex-row items-center mt-[-4]">
+                    <Text className="text-xs font-bold text-gray-400 uppercase tracking-tighter">
+                      {remainingCalories >= 0 ? 'Remaining: ' : 'Over limit: '}
+                    </Text>
+                    <Text
+                      className={`text-sm font-black ${remainingCalories >= 0 ? 'text-green-700' : 'text-red-500'}`}
+                    >
+                      {Math.abs(remainingCalories).toFixed(0)}
+                    </Text>
+                  </View>
                 </View>
             </View>
 
         </View>
       </View>
       <AddMealLogModal
-        isVisible={isModalOpen}
+        isVisible={isAddMealLogModalOpen}
         onClose={() => {
-          setIsModalOpen(false);
+          setIsAddMealLogModalOpen(false);
           setSelectedSection(null);
         }}
         onQuickSubmit={handleQuickAddLog}
@@ -302,6 +390,16 @@ const Meals = () => {
         onMealSubmit={handleAddMealLog}
         sectionTitle={selectedSection}
       />
+      <LogModal
+        isVisible={isLogModalOpen}
+        onClose={() => {
+          setIsLogModalOpen(false);
+          setSelectedLog(null);
+        }}
+        onSubmit={handleUpdateMealLog}
+        log={selectedLog}
+      />
+
     </SafeAreaView>
   );
 };

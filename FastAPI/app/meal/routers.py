@@ -8,6 +8,7 @@ from app.fridge.dependencies import FridgeDep
 from app.meal.dependencies import MealServiceDep
 from app.meal.models import MealLog
 from app.meal.schemas import (
+    MealLogFromMealCreate,
     MealLogFromProductCreate,
     MealLogQuickCreate,
     MealLogRead,
@@ -35,6 +36,18 @@ async def add_meal_log_from_fridge_product(
     )
 
 
+@router.post("/from-meal", response_model=Sequence[MealLogRead])
+async def add_meal_log_from_fridge_meal(
+    meal_service: MealServiceDep,
+    user: UserDep,
+    fridge: FridgeDep,
+    log_in: MealLogFromMealCreate,
+):
+    return await meal_service.create_meal_logs_from_fridge_meal(
+        user.id, fridge.id, data=log_in
+    )
+
+
 @router.get("/{log_id}", response_model=MealLogRead)
 async def read_meal_log_by_id(
     meal_service: MealServiceDep, user: UserDep, log_id: int
@@ -45,6 +58,20 @@ async def read_meal_log_by_id(
 @router.get("/{log_date}/meal-logs", response_model=Sequence[MealLogRead])
 async def read_meal_logs(meal_service: MealServiceDep, user: UserDep, log_date: date):
     return await meal_service.get_meal_logs(user.id, meal_date=log_date)
+
+
+@router.put("/{log_id}/name", response_model=MealLogRead)
+async def update_meal_log_name(
+    meal_service: MealServiceDep, user: UserDep, log_id: int, log_name: str
+) -> MealLog:
+    return await meal_service.update_meal_log_name(user.id, log_id, log_name)
+
+
+@router.put("/{log_id}/weight", response_model=MealLogRead)
+async def update_meal_log_weight(
+    meal_service: MealServiceDep, user: UserDep, log_id: int, weight: int
+) -> MealLog:
+    return await meal_service.update_meal_log_weight(user.id, log_id, weight)
 
 
 @router.delete("/{log_id}", response_model=MealLogRead)

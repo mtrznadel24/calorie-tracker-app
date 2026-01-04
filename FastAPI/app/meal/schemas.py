@@ -24,6 +24,10 @@ class MealLogFromProductCreate(MealLogCreateBase):
     fridge_product_id: int
 
 
+class MealLogFromMealCreate(MealLogCreateBase):
+    fridge_meal_id: int
+
+
 class MealLogRead(BaseModel):
     id: int
     name: str

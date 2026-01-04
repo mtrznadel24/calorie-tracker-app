@@ -10,6 +10,7 @@ interface MealProps {
   fats: number;
   carbs: number;
   productsCount: number;
+  weight: number;
   isFavourite: boolean;
   onPress?: () => void;
   onToggleFavourite?: () => void;
@@ -22,6 +23,7 @@ const MealCard = ({
   fats,
   carbs,
   productsCount,
+  weight,
   isFavourite,
   onPress,
   onToggleFavourite,
@@ -49,7 +51,7 @@ const MealCard = ({
               style={{ marginRight: 4 }}
             />
             <Text className="text-xs text-text-muted">
-              {productsCount} products
+              {productsCount} products • {weight || 100}g
             </Text>
           </View>
         </View>

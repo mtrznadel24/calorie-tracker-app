@@ -11,6 +11,9 @@ class MealRepository(UserScopedRepository[MealLog]):
     def __init__(self, db: AsyncSession):
         super().__init__(db, MealLog)
 
+    def add_all_products(self, meal_logs: list[MealLog]):
+        self.db.add_all(meal_logs)
+
     async def get_meal_logs(self, user_id: int, meal_date: date):
         stmt = select(MealLog).where(
             MealLog.user_id == user_id, MealLog.date == meal_date

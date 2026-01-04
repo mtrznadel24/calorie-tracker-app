@@ -1,5 +1,4 @@
 import {api} from "@/api/axiosInstance";
-import {data} from "browserslist";
 
 
 export interface Meal {
@@ -10,6 +9,7 @@ export interface Meal {
   fats: number;
   carbs: number;
   products_count: number;
+  weight: number;
   is_favourite: boolean;
 }
 

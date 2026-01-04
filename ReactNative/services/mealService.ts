@@ -1,4 +1,5 @@
 import {api} from "@/api/axiosInstance";
+import {data} from "browserslist";
 
 
 export interface MealLog{
@@ -49,6 +50,13 @@ export interface FromProductAddLogData {
   weight: number;
 }
 
+export interface FromMealAddLogData {
+  fridge_meal_id: number;
+  date: string;
+  type: string;
+  weight: number;
+}
+
 export const formatDateForApi = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -67,8 +75,22 @@ const mealService = {
     return response.data;
   },
 
-  getMealLogs: async (log_date: Date) => {
+  fromMealCreateMealLog: async (data: FromMealAddLogData) => {
+    const response = await api.post(`/meals/from-meal`, data);
+    return response.data;
+  },
 
+  updateMeaLogName: async (log_id: number, name: string) => {
+    const response = await api.put(`/meals/${log_id}/name`, null, {params: {log_name: name}});
+    return response.data;
+  },
+
+  updateMeaLogWeight: async (log_id: number, weight: number) => {
+    const response = await api.put(`/meals/${log_id}/weight`, null, {params: {weight: weight}});
+    return response.data;
+  },
+
+  getMealLogs: async (log_date: Date) => {
     const dateString = formatDateForApi(log_date);
     const response = await api.get(`/meals/${dateString}/meal-logs`)
     return response.data;

@@ -1,7 +1,6 @@
 import React, {useState, createContext, useContext, useEffect} from "react";
 import {tokenStorage} from "@/core/tokenStorage";
 import {api} from "@/api/axiosInstance";
-import axios, { AxiosError } from 'axios';
 
 export interface RegisterFormData {
   email: string;
@@ -17,6 +16,18 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   register: (data: RegisterFormData) => Promise<void>;
   logout: () => Promise<void>;
+}
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  height?: number;
+  age?: number;
+  gender?: string;
+  activity_level?: number;
+  current_weight?: number;
+  target_weekly_gain: number;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);

@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from sqlalchemy import Row, func, literal, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.base_repository import BaseRepository
 from app.core.exceptions import NotFoundError
@@ -76,6 +77,7 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
                 calc_macro("fats_100g").label("fats"),
                 calc_macro("carbs_100g").label("carbs"),
                 func.count(FridgeMealIngredient.id).label("products_count"),
+                func.coalesce(func.sum(FridgeMealIngredient.weight), 0).label("weight"),
             )
             .select_from(FridgeMeal)
             .outerjoin(
@@ -94,8 +96,14 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
         return result.all()
 
     async def get_fridge_meal_entity(self, fridge_id: int, meal_id: int) -> FridgeMeal:
-        stmt = select(FridgeMeal).where(
-            FridgeMeal.fridge_id == fridge_id, FridgeMeal.id == meal_id
+        stmt = (
+            select(FridgeMeal)
+            .options(
+                selectinload(FridgeMeal.ingredients).selectinload(
+                    FridgeMealIngredient.fridge_product
+                )
+            )
+            .where(FridgeMeal.fridge_id == fridge_id, FridgeMeal.id == meal_id)
         )
         result = await self.db.execute(stmt)
         meal = result.scalar_one_or_none()
@@ -124,6 +132,7 @@ class FridgeMealRepository(BaseRepository[FridgeMeal]):
                 calc_macro("fats_100g").label("fats"),
                 calc_macro("carbs_100g").label("carbs"),
                 func.count(FridgeMealIngredient.id).label("products_count"),
+                func.coalesce(func.sum(FridgeMealIngredient.weight), 0).label("weight"),
             )
             .select_from(FridgeMeal)
             .outerjoin(

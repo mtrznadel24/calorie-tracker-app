@@ -18,6 +18,7 @@ import { Product } from "@/services/fridgeProductsService";
 import { Meal } from "@/services/fridgeMealsService";
 import Toast from "react-native-toast-message";
 import {QuickAddLogData, SimpleProductData} from "@/services/mealService";
+import SetWeightModal from "@/components/meals/SetWeightModal";
 
 
 interface AddMealLogModalProps {
@@ -25,7 +26,7 @@ interface AddMealLogModalProps {
   onClose: () => void;
   onQuickSubmit: (data: SimpleProductData) => void;
   onProductSubmit: (product: Product, weight: number) => Promise<void>;
-  onMealSubmit: (meal: Meal) => Promise<void>;
+  onMealSubmit: (meal: Meal, weight: number) => Promise<void>;
   sectionTitle: string | null;
 }
 
@@ -35,7 +36,7 @@ const AddMealLogModal = ({ isVisible, onClose, onQuickSubmit, onProductSubmit, o
   const [activeTab, setActiveTab] = useState<TabType>('products');
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [weight, setWeight] = useState("");
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
 
   const [quickName, setQuickName] = useState("");
   const [quickCals, setQuickCals] = useState("");
@@ -48,15 +49,14 @@ const AddMealLogModal = ({ isVisible, onClose, onQuickSubmit, onProductSubmit, o
 
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
-    setWeight("");
   };
 
-  const submitProduct = async () => {
+  const submitProduct = async (weight: number) => {
     if (!selectedProduct || !weight) return;
     setIsLoading(true);
     try {
 
-      await onProductSubmit(selectedProduct, parseFloat(weight));
+      await onProductSubmit(selectedProduct, weight);
       resetAndClose();
     } catch (e) {
       console.error(e);
@@ -65,12 +65,16 @@ const AddMealLogModal = ({ isVisible, onClose, onQuickSubmit, onProductSubmit, o
     }
   };
 
-  const handleMealSelect = async (meal: Meal) => {
+  const handleMealSelect = (meal: Meal) => {
+    setSelectedMeal(meal);
+  };
+
+  const submitMeal = async (weight: number) => {
+    if (!selectedMeal || !weight) return;
     setIsLoading(true);
     try {
-      await onMealSubmit(meal);
+      await onMealSubmit(selectedMeal, weight);
       resetAndClose();
-      Toast.show({ type: 'success', text1: 'Meal added successfully' });
     } catch (e) {
         console.error(e);
     } finally {
@@ -101,7 +105,7 @@ const AddMealLogModal = ({ isVisible, onClose, onQuickSubmit, onProductSubmit, o
 
   const resetAndClose = () => {
     setSelectedProduct(null);
-    setWeight("");
+    setSelectedMeal(null);
     setQuickWeight("");
     setQuickName("");
     setQuickCals("");
@@ -111,34 +115,10 @@ const AddMealLogModal = ({ isVisible, onClose, onQuickSubmit, onProductSubmit, o
     onClose();
   };
 
-  if (selectedProduct) {
-    return (
-      <Modal animationType="slide" visible={isVisible} presentationStyle="pageSheet" onRequestClose={() => resetAndClose}>
-         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 bg-white dark:bg-dark-900 justify-center px-6">
-            <Pressable onPress={() => resetAndClose} className="absolute top-6 left-4 z-10 p-2 bg-light-100 dark:bg-dark-800 rounded-full">
-                <Ionicons name="arrow-back" size={24} color="gray" />
-            </Pressable>
-
-            <View className="items-center w-full">
-                <Text className="text-2xl font-bold mb-2 dark:text-white text-center">How much {selectedProduct.product_name}?</Text>
-                <Text className="text-gray-500 mb-8">{selectedProduct.calories_100g} kcal / 100g</Text>
-
-                <View className="flex-row items-end justify-center gap-2 mb-10">
-                    <TextInput
-                        value={weight} onChangeText={setWeight} keyboardType="numeric" autoFocus
-                        placeholder="0" className="text-6xl font-bold text-primary border-b-2 border-primary min-w-[100px] text-center"
-                    />
-                    <Text className="text-2xl text-gray-400 pb-4">g</Text>
-                </View>
-
-                <Pressable onPress={submitProduct} disabled={!weight || isLoading} className="w-full bg-primary p-4 rounded-xl items-center">
-                    {isLoading ? <ActivityIndicator color="white"/> : <Text className="text-white font-bold text-lg">Add to {sectionTitle}</Text>}
-                </Pressable>
-            </View>
-         </KeyboardAvoidingView>
-      </Modal>
-    );
-  }
+  const closeWeightModal = () => {
+    setSelectedProduct(null);
+    setSelectedMeal(null);
+  };
 
   return (
     <Modal animationType="slide" visible={isVisible} presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -306,6 +286,29 @@ const AddMealLogModal = ({ isVisible, onClose, onQuickSubmit, onProductSubmit, o
               </ScrollView>
             )}
         </View>
+
+        {selectedProduct && (
+          <SetWeightModal
+            isVisible={!!selectedProduct}
+            name={selectedProduct.product_name}
+            initialWeight={100}
+            isLoading={isLoading}
+            onClose={closeWeightModal}
+            onSubmit={submitProduct}
+          />
+        )}
+
+        {selectedMeal && (
+          <SetWeightModal
+            isVisible={!!selectedMeal}
+            name={selectedMeal.name}
+            initialWeight={selectedMeal.weight || 0}
+            isLoading={isLoading}
+            onClose={closeWeightModal}
+            onSubmit={submitMeal}
+          />
+        )}
+
       </View>
     </Modal>
   );

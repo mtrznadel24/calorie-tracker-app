@@ -46,6 +46,7 @@ class UserCreate(BaseModel):
     age: int | None = Field(default=None, gt=0, lt=120)
     gender: Gender | None = Field(default=None)
     activity_level: float | None = Field(default=None, ge=1, le=5)
+    target_weekly_gain: float = Field(default=0, ge=-1, le=1)
 
     @field_validator("password")
     @classmethod
@@ -62,10 +63,12 @@ class UserRead(BaseModel):
     id: int
     username: str
     email: str
-    height: float | None
-    age: int | None
-    gender: Gender | None
-    activity_level: float | None
+    height: float | None = None
+    age: int | None = None
+    gender: Gender | None = None
+    activity_level: float | None = None
+    current_weight: float | None = None
+    target_weekly_gain: float = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -83,6 +86,7 @@ class UserUpdate(BaseModel):
     age: int | None = Field(default=None, gt=0, lt=120)
     gender: Gender | None = Field(default=None)
     activity_level: float | None = Field(default=None, ge=1, le=5)
+    target_weekly_gain: float | None = Field(default=None, ge=-1, le=1)
 
 
 class UserUpdateEmail(BaseModel):
