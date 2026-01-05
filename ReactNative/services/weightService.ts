@@ -1,7 +1,7 @@
 import { api } from "@/api/axiosInstance";
 
 const weightService = {
-  createWeight: async (data: { weight: number | null }) => {
+  addWeight: async (data: { weight: number}) => {
     const response = await api.post("/weights", data);
     return response.data;
   }
