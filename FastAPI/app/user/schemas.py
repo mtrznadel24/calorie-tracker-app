@@ -114,3 +114,6 @@ class UserUpdatePassword(BaseModel):
     def check_passwords_match(self):
         validate_passwords_match(self.new_password, self.repeat_password)
         return self
+
+class DeleteUserData(BaseModel):
+    password: str

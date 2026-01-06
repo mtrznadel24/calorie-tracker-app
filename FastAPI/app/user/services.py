@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, UnauthorizedError
+from app.core.exceptions import ConflictError, UnauthorizedError, NotFoundError
 from app.core.security import get_hashed_password, verify_password
 from app.fridge.models import Fridge
 from app.measurements.repositories import WeightRepository
@@ -14,7 +14,7 @@ from app.user.schemas import (
     UserRead,
     UserUpdate,
     UserUpdateEmail,
-    UserUpdatePassword,
+    UserUpdatePassword, DeleteUserData,
 )
 from app.utils.health_metrics import calculate_bmi, calculate_bmr, calculate_tdee
 
@@ -137,3 +137,23 @@ class UserService:
             raise ConflictError("No weight data")
         weight = weight_obj.weight
         return calculate_bmi(weight, height)
+
+    async def delete_user(self, user_id: int, data: DeleteUserData):
+        user_in = await self.repo.get_by_id(user_id)
+        if not user_in:
+            raise NotFoundError("User not found")
+
+        is_password_correct = verify_password(data.password, user_in.hashed_password)
+
+        if not is_password_correct:
+            raise UnauthorizedError("Invalid password provided for account deletion")
+
+        await self.repo.delete_by_id(user_id)
+
+        try:
+            await self.repo.commit_or_conflict()
+        except IntegrityError as e:
+            logger.info("Delete user id=%s error=%s", user_id, e)
+            raise ConflictError("Cannot delete user") from e
+
+

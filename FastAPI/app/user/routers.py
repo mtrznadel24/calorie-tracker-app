@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status, Response
 
 from app.auth.dependencies import UserDep
 from app.core.rate_limiting import rate_limiter as RateLimiter
 from app.user.dependencies import UserServiceDep
 from app.user.models import User
-from app.user.schemas import UserRead, UserUpdate, UserUpdateEmail, UserUpdatePassword
+from app.user.schemas import UserRead, UserUpdate, UserUpdateEmail, UserUpdatePassword, DeleteUserData
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -38,3 +38,8 @@ async def update_user_password(
     _: int = Depends(RateLimiter(times=5, seconds=300)),
 ) -> User:
     return await user_service.change_user_password(user.id, data)
+
+@router.delete("/me")
+async def delete_user(user_service: UserServiceDep, user: UserDep, data: DeleteUserData):
+    await user_service.delete_user(user.id, data)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
