@@ -3,18 +3,19 @@ import logging
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, UnauthorizedError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, UnauthorizedError
 from app.core.security import get_hashed_password, verify_password
 from app.fridge.models import Fridge
 from app.measurements.repositories import WeightRepository
 from app.user.models import User
 from app.user.repositories import UserRepository
 from app.user.schemas import (
+    DeleteUserData,
     UserCreate,
     UserRead,
     UserUpdate,
     UserUpdateEmail,
-    UserUpdatePassword, DeleteUserData,
+    UserUpdatePassword,
 )
 from app.utils.health_metrics import calculate_bmi, calculate_bmr, calculate_tdee
 
@@ -155,5 +156,3 @@ class UserService:
         except IntegrityError as e:
             logger.info("Delete user id=%s error=%s", user_id, e)
             raise ConflictError("Cannot delete user") from e
-
-

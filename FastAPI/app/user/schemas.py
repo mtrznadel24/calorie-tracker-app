@@ -115,5 +115,6 @@ class UserUpdatePassword(BaseModel):
         validate_passwords_match(self.new_password, self.repeat_password)
         return self
 
+
 class DeleteUserData(BaseModel):
     password: str
