@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class WeightCreate(BaseModel):
     date: dt.date = Field(default_factory=dt.date.today)
-    weight: float | None = Field(default=None, gt=0, lt=300)
+    weight: float = Field(gt=0, lt=300)
 
 
 class WeightRead(BaseModel):

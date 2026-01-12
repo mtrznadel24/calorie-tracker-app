@@ -49,6 +49,12 @@ const InitialLayout = () => {
   const segments = useSegments();
   const router = useRouter();
 
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const rootBg = isDark ? Colors.dark[800] : Colors.light[100];
+
+  const backgroundColor = isDark ? Colors.dark[800] : Colors.light[100];
+
   useEffect(() => {
     if (isLoading) return;
 
@@ -62,18 +68,27 @@ const InitialLayout = () => {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: Colors.dark[800] }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: backgroundColor }}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)"/>
-      <Stack.Screen name="(auth)"/>
-      <Stack.Screen name="(onboarding)"/>
-    </Stack>
+    <View style={{ flex: 1, backgroundColor: rootBg }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: backgroundColor },
+          animation: 'slide_from_right',
+        }}
+      >
+        <Stack.Screen name="(tabs)"/>
+        <Stack.Screen name="(auth)"/>
+        <Stack.Screen name="(onboarding)"/>
+        <Stack.Screen name="profile" />
+      </Stack>
+    </View>
   )
 }
 

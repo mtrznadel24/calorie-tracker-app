@@ -21,13 +21,10 @@ import {MaterialCommunityIcons} from "@expo/vector-icons";
 
 
 const weightSchema = z.object({
-  weight: z.preprocess(
-    (val) => (val === "" || val === null ? null : Number(val)),
-    z.number()
-      .min(20, "Weight must be at least 20 kg")
-      .max(300, "Enter a realistic weight")
-      .nullable()
-  ),
+  weight: z.coerce
+    .number({ invalid_type_error: "Weight is required" })
+    .gt(0, "Weight must be greater than 0")
+    .lt(300, "Weight must be less than 300")
 });
 
 type WeightForm = z.infer<typeof weightSchema>;
@@ -39,14 +36,11 @@ const SetupWeight = () => {
 
   const { control, handleSubmit, formState: { errors } } = useForm<WeightForm>({
     resolver: zodResolver(weightSchema) as any,
-    defaultValues: {
-      weight: null
-    }
   });
 
   const onSubmit = async (data: WeightForm) => {
     try {
-      await weightService.createWeight(data);
+      await weightService.addWeight({weight: data.weight});
       router.replace("/(onboarding)/setup-activity-level")
     } catch (error) {
       Toast.show({

@@ -98,7 +98,15 @@ export const AuthProvider = ({children}: { children: React.ReactNode }) => {
       const userResponse = await api.get("/user/me");
       setUser(userResponse.data);
     } catch (error: any) {
-      console.log("Register error", error);
+      if (error.response) {
+          // TO JEST KLUCZOWE - backend tu wysyła szczegóły!
+          console.log("------- BŁĄD BACKENDU (422) -------");
+          console.log("Status:", error.response.status);
+          console.log("Szczegóły:", JSON.stringify(error.response.data, null, 2));
+          console.log("-----------------------------------");
+      } else {
+          console.log("Inny błąd:", error.message);
+      }
       throw error;
     } finally {
       setIsLoading(false);

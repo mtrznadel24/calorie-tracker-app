@@ -16,42 +16,38 @@ class MeasurementsService:
     def __init__(self, db: AsyncSession):
         self.repo = MeasurementRepository(db)
         self.weight_repo = WeightRepository(db)
+        self.weight_service = WeightService(db)
 
     async def create_measurements(
         self, user_id: int, data: MeasurementsCreate
     ) -> Measurement:
         weight_in = None
         if data.weight is not None:
-            weight_in = Weight(
-                **data.weight.model_dump(exclude_unset=True), user_id=user_id
+            weight_in = await self.weight_service.get_and_update_or_create_weight(
+                user_id, data.weight
             )
-            self.weight_repo.add(weight_in)
             await self.repo.flush()
-        measurements_in = Measurement(
-            user_id=user_id,
-            date=data.date,
-            weight_id=weight_in.id if weight_in else None,
-            neck=data.neck,
-            biceps=data.biceps,
-            chest=data.chest,
-            waist=data.waist,
-            hips=data.hips,
-            thighs=data.thighs,
-            calves=data.calves,
-        )
-        self.repo.add(measurements_in)
-        try:
-            await self.repo.commit_or_conflict()
-        except IntegrityError:
-            logger.warning(
-                "Attempt to create duplicate measurements for user_id=%s date=%s",
-                user_id,
-                data.date,
+
+        measurement = await self.repo.get_measurement_by_date(user_id, data.date)
+        if measurement is None:
+            measurement = Measurement(
+                user_id=user_id,
+                date=data.date,
+                weight_id=weight_in.id if weight_in else None,
+                **data.model_dump(exclude={"weight", "date"}),
             )
-            raise ConflictError(
-                f"Measurements with date:{data.date} already exists"
-            ) from None
-        return await self.repo.refresh_and_return(measurements_in)
+            self.repo.add(measurement)
+        else:
+            if weight_in:
+                measurement.weight_id = weight_in.id
+            update_data = data.model_dump(
+                exclude={"weight", "date"}, exclude_unset=True
+            )
+            for key, value in update_data.items():
+                setattr(measurement, key, value)
+
+        await self.repo.commit_or_conflict()
+        return await self.repo.refresh_and_return(measurement)
 
     async def get_measurements(self, user_id: int, measurement_id: int) -> Measurement:
         return await self.repo.get_by_id_for_user(user_id, measurement_id)
@@ -78,13 +74,19 @@ class WeightService:
         self.db = db
         self.repo = WeightRepository(db)
 
-    async def create_weight(self, user_id: int, data: WeightCreate) -> Weight:
+    async def get_and_update_or_create_weight(
+        self, user_id: int, data: WeightCreate
+    ) -> Weight:
         weight = await self.repo.get_weight_by_date(user_id, data.date)
         if weight is None:
             weight = Weight(**data.model_dump(exclude_unset=True), user_id=user_id)
             self.repo.add(weight)
         else:
             weight.weight = data.weight
+        return weight
+
+    async def create_weight(self, user_id: int, data: WeightCreate) -> Weight:
+        weight = await self.get_and_update_or_create_weight(user_id, data)
         try:
             await self.repo.commit_or_conflict()
         except IntegrityError:

@@ -38,7 +38,6 @@ const Register = () => {
 
   const { control, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema) as any,
-    shouldUnregister: false,
     defaultValues: {
       username: '',
       email: '',

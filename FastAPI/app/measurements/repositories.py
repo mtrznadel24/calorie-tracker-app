@@ -45,6 +45,14 @@ class MeasurementRepository(UserScopedRepository[Measurement]):
         )
         return result.scalars().all()
 
+    async def get_measurement_by_date(self, user_id, date):
+        result = await self.db.execute(
+            select(Measurement).where(
+                Measurement.user_id == user_id, Measurement.date == date
+            )
+        )
+        return result.scalar_one_or_none()
+
 
 class WeightRepository(UserScopedRepository[Weight]):
     def __init__(self, db: AsyncSession):
