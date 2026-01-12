@@ -43,7 +43,7 @@ const Profile = () => {
           <MenuButton
             title="Measurements"
             icon="stats-chart-outline"
-            onPress={() => router.push("/profile/measurements")}
+            onPress={() => router.push("/profile/measurements-screen")}
             color="#8b5cf6"
           />
           <MenuButton

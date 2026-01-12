@@ -55,7 +55,7 @@ export default function ProfileLayout() {
         options={{ title: "Body & Goals" }}
       />
       <Stack.Screen
-        name="measurements"
+        name="measurements-screen"
         options={{ title: "Measurements" }}
       />
       <Stack.Screen

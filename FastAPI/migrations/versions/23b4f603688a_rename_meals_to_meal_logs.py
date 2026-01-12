@@ -29,6 +29,11 @@ def upgrade() -> None:
 
     op.execute("DROP TYPE IF EXISTS meal_type CASCADE")
 
+    meal_type = sa.Enum(
+        "BREAKFAST", "LUNCH", "DINNER", "SNACK", "SUPPER", name="meal_type"
+    )
+    meal_type.create(op.get_bind())
+
     op.create_table(
         "meal_logs",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -36,9 +41,7 @@ def upgrade() -> None:
         sa.Column("date", sa.Date(), nullable=False),
         sa.Column(
             "type",
-            sa.Enum(
-                "BREAKFAST", "LUNCH", "DINNER", "SNACK", "SUPPER", name="meal_type"
-            ),
+            meal_type,
             nullable=False,
         ),
         sa.Column("weight", sa.Float(), nullable=False),
