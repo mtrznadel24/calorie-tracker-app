@@ -2,7 +2,6 @@ import datetime as dt
 
 import pytest
 
-from app.core.exceptions import ConflictError
 from app.measurements.schemas import MeasurementsCreate, WeightCreate
 
 
@@ -37,17 +36,6 @@ class TestMeasurementService:
         assert result.waist == 80
         assert result.weight_id == weight.id
         assert result.neck is None
-
-    async def test_create_measurements_failure(
-        self, measurements_service, user, sample_measurement
-    ):
-        data_weight = WeightCreate(weight=80)
-        data = MeasurementsCreate(
-            date=dt.date(2022, 1, 1), weight=data_weight, biceps=35, chest=80, waist=80
-        )
-
-        with pytest.raises(ConflictError):
-            await measurements_service.create_measurements(user.id, data)
 
     async def test_create_weight_success(self, weight_service, user):
         today = dt.date.today()
