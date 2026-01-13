@@ -1,50 +1,96 @@
-# Welcome to your Expo app 👋
+# 📱 Calorie Tracker - Mobile App (React Native)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is the frontend of the Calorie Tracker application, built with **React Native** and **Expo**. It provides a smooth, native experience for tracking nutrition and physical progress, with a strong emphasis on performance and clean UI/UX.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 Frontend Highlights
 
-   ```bash
-   npm install
-   ```
+* **Optimistic UI Updates:** To ensure a lightning-fast feel, the app utilizes optimistic state updates. When adding or deleting logs, the UI reflects changes immediately before the server confirmation.
+* **Responsive Design:** Fully adaptive layouts built with **NativeWind (Tailwind CSS)**, supporting both **Dark and Light modes** based on system preferences.
+* **Interactive Data Visualization:** Custom-styled charts powered by `react-native-gifted-charts` to track weight trends and body measurements.
+* **Smart Navigation:** Utilizes **Expo Router** for file-based routing, ensuring a clean and intuitive navigation flow.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 🛠 Tech Stack
 
-In the output, you'll find options to open the app in a
+* **Framework:** React Native (Expo)
+* **Language:** TypeScript (Strictly typed)
+* **Styling:** NativeWind (Tailwind CSS)
+* **API Client:** Axios with custom Interceptors
+* **State & Logic:** React Hooks
+* **Charts:** React Native Gifted Charts
+* **Icons:** Lucide React & Material Community Icons
+* **Storage:** Expo SecureStore (for sensitive token management)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🏗 Network & Security Layer
 
-## Get a fresh project
+One of the core features of the frontend is its robust communication with the FastAPI backend:
 
-When you're ready, run:
+* **Axios Interceptors:** Automated handling of **Access & Refresh Tokens**. The app automatically attempts to refresh the session when a 401 error occurs, providing a seamless experience for the user.
+* **Secure Storage:** JWT tokens are never stored in plain text; they are managed via **Expo SecureStore** for hardware-encrypted security.
+* **Type Safety:** Shared interfaces between the backend and frontend ensure that all API responses are correctly typed and handled.
 
-```bash
-npm run reset-project
+---
+
+## 📂 Project Structure
+
+```text
+ReactNative/
+├── api/                # Axios instance
+├── app/                # Expo Router (Pages & Layouts)
+├── components/         # Reusable UI components (Modals, Cards, Inputs)
+├── services/           # API calls and Axios configuration
+├── constants/          # Colors, Theme definitions, and API Endpoints
+├── contexts/            # React Context for Auth and Global State
+├── hooks/              # Custom hooks for logic reuse
+├── assets/             # Images, fonts, and icons
+└── .env.example        # Environment variables template
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 📝 Key Developer Features
+* **Memoization:** Strategic use of useMemo and useCallback to prevent unnecessary re-renders in complex lists (like the "Fridge" or "Logs").
 
-## Learn more
+* **Clean Components:** Separation of business logic (Services/Hooks) from the presentation layer (Components).
 
-To learn more about developing your project with Expo, look at the following resources:
+## 🚀 Getting Started
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+1. Requirements
+Node.js (LTS)
 
-## Join the community
+Expo Go app on your phone or an Emulator (Android Studio / Xcode)
 
-Join our community of developers creating universal apps.
+2. Installation
+```bash
+# Install dependencies
+npm install
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+3. Configuration
+```bash
+# Create your environment file
+cp .env.example .env
+# Update EXPO_PUBLIC_API_URL with your local IP (e.g., [http://192.168.1.](http://192.168.1.)XX:8000)
+```
+
+4. Running the app
+```bash
+# Start the Expo server
+npx expo start
+```
+
+```bash
+# Pro tip: If your phone cannot connect to your computer via local Wi-Fi, 
+# use the tunnel flag to bypass network restricti ASons:
+npx expo start --tunnel
+```
+
+## 🎨 UI/UX Features
+Dynamic Theming: Dark and Light mode based on device settings.
+
+Feedback System: Integrated Toast notifications for successful actions and error handling.
+
+Anatomical Icons: Context-aware icons for body measurements (Material Community Icons).
