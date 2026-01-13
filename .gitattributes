@@ -6,3 +6,6 @@
 *.toml text eol=lf
 *.json text eol=lf
 
+ReactNative/node_modules/**/* linguist-vendored
+ReactNative/package-lock.json linguist-generated
+ReactNative/assets/**/* linguist-documentation
