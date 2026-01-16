@@ -3,14 +3,16 @@
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![React Native](https://img.shields.io/badge/react_native-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
 
-# 🥗 Calorie Tracker App
+# Calorie Tracker App
 
 A professional, full-stack nutritional management and body progress tracking system. This project demonstrates a robust backend architecture using **FastAPI** and a highly responsive mobile experience built with **React Native (Expo)**.
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
 * **Personalized "Fridge" System:** Manage a custom database of products and complex meals.
 * **Granular Daily Logging:** Track intake across categories (Breakfast, Lunch, Dinner, Snacks) with a real-time calorie/macro countdown.
@@ -21,7 +23,7 @@ A professional, full-stack nutritional management and body progress tracking sys
 
 ---
 
-## 🛠 Technical Highlights
+## Technical Highlights
 
 ### **Backend (Domain-Driven Design)**
 * **Architecture:** Clean architecture following **DDD principles** (Routers -> Services -> Repositories).
@@ -36,7 +38,7 @@ A professional, full-stack nutritional management and body progress tracking sys
 * **Code Quality:** Backend linting and formatting enforced by **Ruff**.
 
 ### **Frontend (Performance First)**
-* **State Management:** Optimized UI with **Optimistic Updates** for an instant feel during data entry/deletion.
+* **Localized State Synchronization:** Optimized UI performance by updating specific state fragments post-confirmation, ensuring a seamless, lag-free experience without redundant full-dataset re-fetching.
 * **Efficient Data Handling:** Client-side filtering for the "Fridge" items to reduce server load and improve search speed.
 * **Network Layer:** Axios with custom **Interceptors** for automated token refreshing and secure header injection.
 * **Storage:** Sensitive data managed via **Expo SecureStore**.
@@ -44,14 +46,14 @@ A professional, full-stack nutritional management and body progress tracking sys
 
 ---
 
-## 🏗 Infrastructure
+## Infrastructure
 * **Dockerized Environment:** Fully containerized Backend, PostgreSQL, and Redis using **Docker Compose**.
 * **Multi-environment Support:** Architecture prepared for `Test`, `Dev`, and `Prod` stages using Pydantic `BaseSettings`. 
 * **Configuration:** Template provided via `.env.example` for secure and flexible environment management.
 
 ---
 
-## 📸 Screenshots & Demo
+## Screenshots & Demo
 
 |          Nutrition Logs          |            Profile             |       Progress Charts        |
 |:--------------------------------:|:------------------------------:|:----------------------------:|
@@ -61,11 +63,11 @@ A professional, full-stack nutritional management and body progress tracking sys
 |:--------------------------------------:|:-----------------------------------:|:---------------------------------:|
 | ![Screen4](images/fridge-products.jpg) | ![Screen5](images/measurements.jpg) | ![Screen6](images/body-goals.jpg) |
 
-> 🎥 **Watch the full App Demo on LinkedIn:** [[Link to your LinkedIn post]](your-link-here)
+> ### 🎥 **Watch the full App Demo on LinkedIn:** [Demo](https://www.linkedin.com/feed/update/urn:li:activity:7419329394672009217/)
 
 ---
 
-## ⚙️ Installation & Setup
+## Installation & Setup
 
 1.  **Clone the repository:**
     ```bash
@@ -106,7 +108,7 @@ macOS/Linux: Run ifconfig or hostname -I.
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 * **Maciej Trznadel** – *AGH University of Krakow*
 * **Github:** [@mtrznadel24](https://github.com/mtrznadel24)

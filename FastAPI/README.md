@@ -1,10 +1,10 @@
-# 🐍 Calorie Tracker - Backend (FastAPI)
+# Calorie Tracker - Backend (FastAPI)
 
 This is the core engine of the Calorie Tracker application. It is a high-performance REST API built with **FastAPI**, focusing on clean architecture (DDD), scalability, and robust security.
 
 ---
 
-## 🏗 Architectural Overview: Domain-Driven Design (DDD)
+## Architectural Overview: Domain-Driven Design (DDD)
 
 The project follows a **Domain-Driven Design (DDD)** approach to ensure a clean separation of concerns and high maintainability:
 
@@ -17,7 +17,7 @@ FastAPI's built-in DI system to maintain loosely coupled components, injecting d
 
 ---
 
-## 🔒 Security & Authentication
+## Security & Authentication
 
 * **JWT Strategy:** Implementation of a dual-token system (**Access + Refresh Tokens**).
 * **Redis Store:** * Manages **Refresh Tokens** and user session associations.
@@ -29,7 +29,7 @@ FastAPI's built-in DI system to maintain loosely coupled components, injecting d
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 FastAPI/
@@ -54,7 +54,7 @@ FastAPI/
 └── poetry.lock         # Deterministic dependency lock file
 ```
 
-## 🛠 Tech Stack
+## Tech Stack
 
 * **Framework:** FastAPI (Python 3.10+)
 * **Package Manager:** Poetry
@@ -66,7 +66,7 @@ FastAPI/
 
 ---
 
-## 🧪 Testing Strategy
+## Testing Strategy
 
 The project features a robust testing suite focused on reliability:
 
@@ -81,7 +81,7 @@ To maintain high code standards, this project utilizes:
 * **GitHub Actions:** Automatically runs the **Pytest** suite on every Pull Request to the `main` or `develop` branch to prevent regressions.
 * **Ruff:** Used for lightning-fast linting and code formatting. It ensures compliance with Python best practices (replaces Flake8, Black, and Isort).
 
-## 📝 Key Features for Developers
+## Key Features for Developers
 * **Centralized Logging:** Uses the standard Python logging module configured for simple consistent monitoring across all domains.
 
 * **Global Exception Handling:** Custom exception handlers map domain-specific errors to standardize HTTP JSON responses.
@@ -90,7 +90,7 @@ To maintain high code standards, this project utilizes:
 
 * **Environment Management:** Multi-stage configuration (Dev/Test/Prod) via pydantic-settings.
 
-## 🚀 Getting Started
+## Getting Started
 Install Dependencies:
 
 ```bash 
