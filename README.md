@@ -53,9 +53,13 @@ A professional, full-stack nutritional management and body progress tracking sys
 
 ## 📸 Screenshots & Demo
 
-| Dashboard | Progress Charts | Fridge Management |
-| :---: | :---: | :---: |
-| ![Dashboard](https://via.placeholder.com/200x400?text=Dashboard) | ![Charts](https://via.placeholder.com/200x400?text=Charts) | ![Fridge](https://via.placeholder.com/200x400?text=Fridge) |
+|          Nutrition Logs          |            Profile             |       Progress Charts        |
+|:--------------------------------:|:------------------------------:|:----------------------------:|
+| ![Screen1](images/meal-logs.jpg) | ![Screen2](images/profile.jpg) | ![Screen3](images/chart.jpg) |
+
+|           Fridge (Products)            |          Body Measurements          |           Body & goals            |
+|:--------------------------------------:|:-----------------------------------:|:---------------------------------:|
+| ![Screen4](images/fridge-products.jpg) | ![Screen5](images/measurements.jpg) | ![Screen6](images/body-goals.jpg) |
 
 > 🎥 **Watch the full App Demo on LinkedIn:** [[Link to your LinkedIn post]](your-link-here)
 
@@ -74,16 +78,31 @@ A professional, full-stack nutritional management and body progress tracking sys
     cd FastAPI
     # Setup your .env file
     docker-compose up --build
+    ```
+    
+3. **Run database migrations**
+    ```bash
     # In a new terminal, run migrations
-    alembic upgrade head
+    docker exec -it calorie-tracker-api alembic upgrade head
     ```
 
-3.  **Frontend Setup:**
+> ⚠️ Note: If you have a local Python environment configured with Poetry, you can also run poetry run alembic upgrade head.
+
+4. **Frontend Setup:**
     ```bash
     cd ReactNative
     npm install
+    # Create a .env file in the ReactNative folder and provide your local IP address
     npx expo start
     ```
+
+> ⚠ TIP: How to find your local IP?
+
+Windows: Run ipconfig in CMD/PowerShell and look for IPv4 Address (usually 192.168.x.x).
+
+macOS/Linux: Run ifconfig or hostname -I.   
+> ⚠️ IMPORTANT: If you are on a public/restricted Wi-Fi network and can't connect, try running with the tunnel flag: npx expo start --tunnel
+
 
 ---
 

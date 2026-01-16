@@ -14,10 +14,10 @@ class MealLogCreateBase(BaseModel):
 
 class MealLogQuickCreate(MealLogCreateBase):
     name: str
-    calories: float
-    proteins: float
-    fats: float
-    carbs: float
+    calories: float = Field(default=0, ge=0)
+    proteins: float = Field(default=0, ge=0)
+    fats: float = Field(default=0, ge=0)
+    carbs: float = Field(default=0, ge=0)
 
 
 class MealLogFromProductCreate(MealLogCreateBase):

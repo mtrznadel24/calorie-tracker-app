@@ -11,7 +11,13 @@ from app.core.db import Base
 load_dotenv()
 
 config = context.config
-config.set_main_option("sqlalchemy.url", os.getenv("SYNC_DATABASE_URL"))
+
+db_url = os.getenv("SYNC_DATABASE_URL")
+
+if os.path.exists("/.dockerenv"):
+    db_url = db_url.replace("localhost", "db").replace("5433", "5432")
+
+config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

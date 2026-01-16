@@ -6,10 +6,10 @@ from app.fridge.models import FoodCategory
 # Fridge product
 class FridgeProductCreate(BaseModel):
     product_name: str = Field(pattern=r"^[a-zA-Z0-9\s\-.]+$")
-    calories_100g: float = Field(default=None, gt=0)
-    proteins_100g: float = Field(default=None, gt=0)
-    fats_100g: float = Field(default=None, gt=0)
-    carbs_100g: float = Field(default=None, gt=0)
+    calories_100g: float = Field(default=0, ge=0)
+    proteins_100g: float = Field(default=0, ge=0)
+    fats_100g: float = Field(default=0, ge=0)
+    carbs_100g: float = Field(default=0, ge=0)
     category: FoodCategory
     is_favourite: bool = False
 
@@ -29,10 +29,10 @@ class FridgeProductRead(BaseModel):
 
 class FridgeProductUpdate(BaseModel):
     product_name: str | None = Field(default=None, pattern=r"^[a-zA-Z0-9\s\-.]+$")
-    calories_100g: float | None = Field(default=None, gt=0)
-    proteins_100g: float | None = Field(default=None, gt=0)
-    fats_100g: float | None = Field(default=None, gt=0)
-    carbs_100g: float | None = Field(default=None, gt=0)
+    calories_100g: float | None = Field(default=0, ge=0)
+    proteins_100g: float | None = Field(default=0, ge=0)
+    fats_100g: float | None = Field(default=0, ge=0)
+    carbs_100g: float | None = Field(default=0, ge=0)
     category: FoodCategory | None = None
     is_favourite: bool | None = None
 
