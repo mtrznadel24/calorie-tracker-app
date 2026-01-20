@@ -61,7 +61,7 @@ A professional, full-stack nutritional management and body progress tracking sys
 |:--------------------------------------:|:-----------------------------------:|:---------------------------------:|
 | ![Screen4](images/fridge-products.jpg) | ![Screen5](images/measurements.jpg) | ![Screen6](images/body-goals.jpg) |
 
-> 🎥 **Watch the full App Demo on LinkedIn:** [soon]()
+> ### 🎥 **Watch the full App Demo on LinkedIn:** [Demo](https://www.linkedin.com/feed/update/urn:li:activity:7419329394672009217/)
 
 ---
 
