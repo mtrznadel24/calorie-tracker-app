@@ -6,7 +6,7 @@ This is the frontend of the Calorie Tracker application, built with **React Nati
 
 ## 🚀 Frontend Highlights
 
-* **Optimistic UI Updates:** To ensure a lightning-fast feel, the app utilizes optimistic state updates. When adding or deleting logs, the UI reflects changes immediately before the server confirmation.
+* **Efficient State Management:** To ensure a fast feel, the app utilizes localized state updates. Instead of reloading the entire dataset, only the relevant part of the UI is re-rendered after a successful server response.
 * **Responsive Design:** Fully adaptive layouts built with **NativeWind (Tailwind CSS)**, supporting both **Dark and Light modes** based on system preferences.
 * **Interactive Data Visualization:** Custom-styled charts powered by `react-native-gifted-charts` to track weight trends and body measurements.
 * **Smart Navigation:** Utilizes **Expo Router** for file-based routing, ensuring a clean and intuitive navigation flow.
