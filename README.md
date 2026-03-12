@@ -38,7 +38,7 @@ A professional, full-stack nutritional management and body progress tracking sys
 * **Code Quality:** Backend linting and formatting enforced by **Ruff**.
 
 ### **Frontend (Performance First)**
-* **State Management:** Optimized UI with **Optimistic Updates** for an instant feel during data entry/deletion.
+* **Localized State Synchronization:** Optimized UI performance by updating specific state fragments post-confirmation, ensuring a seamless, lag-free experience without redundant full-dataset re-fetching.
 * **Efficient Data Handling:** Client-side filtering for the "Fridge" items to reduce server load and improve search speed.
 * **Network Layer:** Axios with custom **Interceptors** for automated token refreshing and secure header injection.
 * **Storage:** Sensitive data managed via **Expo SecureStore**.
